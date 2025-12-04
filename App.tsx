@@ -5,6 +5,7 @@ import JianzhiCanvas, { JianzhiCanvasHandle } from './components/JianzhiCanvas';
 import Controls from './components/Controls';
 import FoldingControls from './components/FoldingControls';
 import SettingsModal from './components/SettingsModal';
+import FoldAnimator from './components/FoldAnimator';
 import { PaperSimulation } from './utils/simulationUtils';
 import { PresetSimulation } from './utils/presetSimulation';
 import { DrawingTool, FoldDirection, FoldingMode, SimulationEngine, AppSettings } from './types';
@@ -26,6 +27,10 @@ const App = () => {
   const [foldSequence, setFoldSequence] = useState<string[]>([]); 
   const [selectedPreset, setSelectedPreset] = useState(5); 
   
+  // Folding Animation State
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [animationData, setAnimationData] = useState<{image: string, dir: FoldDirection} | null>(null);
+
   // Paper Appearance
   const [paperColor, setPaperColor] = useState('#DC2626');
 
@@ -44,16 +49,16 @@ const App = () => {
       simulationRef.current = new PaperSimulation(SIM_SIZE);
   }
 
-  const MAX_FOLDS = 4;
+  const MAX_FOLDS = 5;
   const VISUAL_SIZE = 500; 
   
   const canvasRef = useRef<JianzhiCanvasHandle>(null);
 
   useEffect(() => {
-    if (phase === 'folding' && foldCanvasRef.current && simulationRef.current) {
+    if (phase === 'folding' && foldCanvasRef.current && simulationRef.current && !isAnimating) {
         simulationRef.current.renderFoldedState(foldCanvasRef.current, paperColor);
     }
-  }, [phase, paperColor]);
+  }, [phase, paperColor, isAnimating]);
 
   const handleModeChange = (newMode: FoldingMode) => {
       setMode(newMode);
@@ -85,19 +90,39 @@ const App = () => {
   const canFold = (dir: FoldDirection): boolean => {
     if (mode === 'preset') return false;
     if (foldCount >= MAX_FOLDS) return false;
+    if (isAnimating) return false;
     return simulationRef.current ? simulationRef.current.canFold(dir) : false;
   };
 
-  const handleFold = (dir: FoldDirection) => {
-    if (mode === 'preset' || !simulationRef.current) return;
-    const success = simulationRef.current.fold(dir);
-    if (success) {
+  // Internal helper to apply fold logic after animation
+  const executeFold = useCallback((dir: FoldDirection) => {
+    if (simulationRef.current?.fold(dir)) {
         setFoldCount(prev => prev + 1);
         setFoldSequence(prev => [...prev, dir]);
-        if (foldCanvasRef.current) {
-            simulationRef.current.renderFoldedState(foldCanvasRef.current, paperColor);
-        }
     }
+    // Render is handled by useEffect when isAnimating becomes false
+  }, []);
+
+  const handleFold = (dir: FoldDirection) => {
+    if (mode === 'preset' || !simulationRef.current || isAnimating) return;
+    
+    // Capture current state for animation
+    if (foldCanvasRef.current) {
+        const image = foldCanvasRef.current.toDataURL();
+        setAnimationData({ image, dir });
+        setIsAnimating(true);
+    } else {
+        // Fallback if ref is missing
+        executeFold(dir);
+    }
+  };
+
+  const handleAnimationComplete = () => {
+      if (animationData) {
+          executeFold(animationData.dir);
+      }
+      setAnimationData(null);
+      setIsAnimating(false);
   };
 
   const handleResetFolds = () => {
@@ -112,6 +137,8 @@ const App = () => {
     setResultImage(null);
     setCreaseImage(null);
     setPhase('folding');
+    setIsAnimating(false);
+    setAnimationData(null);
     
     if (foldCanvasRef.current && simulationRef.current) {
         const ctx = foldCanvasRef.current.getContext('2d');
@@ -214,7 +241,7 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-grid-pattern text-zinc-800 pb-20">
-      <header className="bg-white border-b border-zinc-200 pt-4 pb-2 px-6 sticky top-0 z-10 shadow-sm">
+      <header className="bg-white border-b border-zinc-200 pt-4 pb-2 px-6 sticky top-0 z-40 shadow-sm">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
             {/* Left Spacer for centering */}
             <div className="w-10"></div>
@@ -270,6 +297,15 @@ const App = () => {
                         height={VISUAL_SIZE}
                         className="absolute inset-0 w-full h-full"
                    />
+                   
+                   {/* 3D Animation Overlay */}
+                   {isAnimating && animationData && (
+                     <FoldAnimator 
+                        image={animationData.image}
+                        direction={animationData.dir}
+                        onComplete={handleAnimationComplete}
+                     />
+                   )}
                </div>
            </div>
 
