@@ -355,10 +355,10 @@ export class PaperSimulation implements SimulationEngine {
   }
 
   /**
-   * Generates a transparent overlay image with dashed lines representing creases.
-   * Argument cutCanvas is ignored in this implementation as it tracks state internally.
+   * Generates a transparent overlay image with SOLID lines representing creases.
+   * Color is slightly darker than the paper color to simulate a crease shadow.
    */
-  public generateCreaseOverlay(cutCanvas?: HTMLCanvasElement): string {
+  public generateCreaseOverlay(cutCanvas?: HTMLCanvasElement, color: string = '#DC2626'): string {
     const canvas = document.createElement('canvas');
     canvas.width = this.size;
     canvas.height = this.size;
@@ -367,46 +367,24 @@ export class PaperSimulation implements SimulationEngine {
     
     const imgData = ctx.createImageData(this.size, this.size);
     const data = imgData.data;
-    
-    // Dash Pattern Configuration
-    // Period is the length of (dash + space)
-    const dashPeriodRect = 16; 
-    const dashLenRect = 8;     
-    
-    // For Diagonal: Match visual length
-    const dashPeriodDiag = 12;
-    const dashLenDiag = 6;
 
+    // Calculate crease color (darkened paper color)
+    const { r, g, b } = hexToRgb(color);
+    const darkenFactor = 0.7; // 30% darker
+    const darkR = Math.floor(r * darkenFactor);
+    const darkG = Math.floor(g * darkenFactor);
+    const darkB = Math.floor(b * darkenFactor);
+    
     for (const [idx, type] of this.creasePixels) {
         // Only draw crease if the paper at this point hasn't been cut away
         if (this.originalPixelsState[idx] === 0) continue; 
         
-        const { x, y } = this.getXY(idx);
-        
-        let shouldDraw = false;
-        
-        switch(type) {
-            case 'H': 
-                if (x % dashPeriodRect < dashLenRect) shouldDraw = true;
-                break;
-            case 'V':
-                if (y % dashPeriodRect < dashLenRect) shouldDraw = true;
-                break;
-            case 'D1': 
-            case 'D2': 
-                if (x % dashPeriodDiag < dashLenDiag) shouldDraw = true;
-                break;
-        }
-
-        if (shouldDraw) {
-             const i = idx * 4;
-             // Color: Light Pinkish Red (subtle)
-             // R:255, G:150, B:150, A:120
-             data[i] = 255;   // R
-             data[i+1] = 180; // G
-             data[i+2] = 180; // B
-             data[i+3] = 120; // Alpha
-        }
+        // Solid line - no dashing check needed
+        const i = idx * 4;
+        data[i] = darkR;   
+        data[i+1] = darkG; 
+        data[i+2] = darkB; 
+        data[i+3] = 160; // Alpha
     }
     
     ctx.putImageData(imgData, 0, 0);

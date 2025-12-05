@@ -1,5 +1,6 @@
 
 import { FoldDirection, SimulationEngine } from '../types';
+import { hexToRgb } from './canvasUtils';
 
 export class PresetSimulation implements SimulationEngine {
   private size: number;
@@ -151,8 +152,9 @@ export class PresetSimulation implements SimulationEngine {
   /**
    * Generates the crease lines (the radial lines separating segments).
    * Uses the cutCanvas (unfolded) as a mask so creases don't appear in empty air.
+   * Lines are SOLID and color-matched (slightly darker than paper).
    */
-  public generateCreaseOverlay(cutCanvas?: HTMLCanvasElement): string {
+  public generateCreaseOverlay(cutCanvas?: HTMLCanvasElement, color: string = '#DC2626'): string {
     const canvas = document.createElement('canvas');
     canvas.width = this.size;
     canvas.height = this.size;
@@ -170,9 +172,16 @@ export class PresetSimulation implements SimulationEngine {
     const cx = this.size / 2;
     const cy = this.size / 2;
 
-    ctx.strokeStyle = 'rgba(255, 180, 180, 0.5)'; // Matches the custom simulation color
-    ctx.lineWidth = 1;
-    ctx.setLineDash([6, 6]); // Matches the diagonal dash pattern
+    // Calculate crease color (darkened paper color)
+    const { r, g, b } = hexToRgb(color);
+    const darkenFactor = 0.7;
+    const darkR = Math.floor(r * darkenFactor);
+    const darkG = Math.floor(g * darkenFactor);
+    const darkB = Math.floor(b * darkenFactor);
+
+    ctx.strokeStyle = `rgba(${darkR}, ${darkG}, ${darkB}, 0.6)`;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([]); // Solid lines
 
     ctx.save();
     ctx.translate(cx, cy);
@@ -180,14 +189,6 @@ export class PresetSimulation implements SimulationEngine {
     // Draw radial lines
     for (let i = 0; i < this.totalSegments; i++) {
         // Calculate the angle for the boundary lines.
-        // The wedge is centered at -90 + i*angle.
-        // The boundaries are at +/- angle/2 from the center.
-        // Or simply, the boundaries are at -90 + angle/2 + k*angle.
-        
-        // Simpler: Just draw lines at the segment intersections.
-        // The "Fold" is at the edge of the wedge.
-        // Wedge 0 center: -90. Edges: -90 +/- angle/2.
-        
         const angle = -Math.PI/2 + this.anglePerSegment/2 + i * this.anglePerSegment;
         
         ctx.beginPath();

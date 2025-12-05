@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { 
-    Scissors, RotateCcw, Eye, Download, Undo2, 
+    Scissors, RotateCcw, Eye, Download, Undo2, Redo2,
     Minus, Square, Circle, Triangle, Brush, Star
 } from 'lucide-react';
 import { DrawingTool } from '../types';
@@ -12,6 +12,7 @@ interface ControlsProps {
   brushSize?: number;
   onBrushSizeChange?: (size: number) => void;
   onUndo: () => void;
+  onRedo: () => void;
   onClear: () => void;
   onShow: () => void;
   isShowingResult: boolean;
@@ -25,6 +26,7 @@ const Controls: React.FC<ControlsProps> = ({
   brushSize = 15,
   onBrushSizeChange,
   onUndo,
+  onRedo,
   onClear,
   onShow,
   isShowingResult,
@@ -66,14 +68,23 @@ const Controls: React.FC<ControlsProps> = ({
                     <span>Tools</span>
                 </div>
 
-                {/* Undo Action */}
-                <button
-                    onClick={onUndo}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 hover:bg-zinc-200 transition-all"
-                    title="Undo"
-                >
-                    <Undo2 size={20} />
-                </button>
+                {/* History Actions */}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={onUndo}
+                        className="w-10 h-10 flex items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 hover:bg-zinc-200 transition-all"
+                        title="Undo"
+                    >
+                        <Undo2 size={20} />
+                    </button>
+                    <button
+                        onClick={onRedo}
+                        className="w-10 h-10 flex items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 hover:bg-zinc-200 transition-all"
+                        title="Redo"
+                    >
+                        <Redo2 size={20} />
+                    </button>
+                </div>
             </div>
 
             {/* Row 1: Draw Tools + Slider */}

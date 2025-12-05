@@ -38,7 +38,7 @@ export interface SimulationEngine {
     renderFoldedState(canvas: HTMLCanvasElement, color: string): void;
     renderActiveCutState(ctx: CanvasRenderingContext2D, color: string): void;
     applyCutAndUnfold(cutCanvas: HTMLCanvasElement, color: string): string;
-    generateCreaseOverlay(cutCanvas?: HTMLCanvasElement): string;
+    generateCreaseOverlay(cutCanvas?: HTMLCanvasElement, color?: string): string;
 }
 
 export interface GalleryItem {

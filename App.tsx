@@ -29,7 +29,11 @@ const App = () => {
   
   // Folding Animation State
   const [isAnimating, setIsAnimating] = useState(false);
-  const [animationData, setAnimationData] = useState<{image: string, dir: FoldDirection} | null>(null);
+  const [animationData, setAnimationData] = useState<{
+    image: string, 
+    dir: FoldDirection,
+    bounds: { minX: number, maxX: number, minY: number, maxY: number }
+  } | null>(null);
 
   // Paper Appearance
   const [paperColor, setPaperColor] = useState('#DC2626');
@@ -109,7 +113,19 @@ const App = () => {
     // Capture current state for animation
     if (foldCanvasRef.current) {
         const image = foldCanvasRef.current.toDataURL();
-        setAnimationData({ image, dir });
+        
+        // Get current bounds from simulation (if available and is PaperSimulation)
+        let bounds = { minX: 0, maxX: SIM_SIZE, minY: 0, maxY: SIM_SIZE };
+        if (simulationRef.current instanceof PaperSimulation) {
+            bounds = {
+                minX: simulationRef.current.minX,
+                maxX: simulationRef.current.maxX,
+                minY: simulationRef.current.minY,
+                maxY: simulationRef.current.maxY
+            };
+        }
+
+        setAnimationData({ image, dir, bounds });
         setIsAnimating(true);
     } else {
         // Fallback if ref is missing
@@ -159,7 +175,7 @@ const App = () => {
       if (cutCanvas && simulationRef.current) {
         setTimeout(() => {
             const texture = simulationRef.current!.applyCutAndUnfold(cutCanvas, paperColor);
-            const creases = simulationRef.current!.generateCreaseOverlay(cutCanvas);
+            const creases = simulationRef.current!.generateCreaseOverlay(cutCanvas, paperColor);
             setResultImage(texture);
             setCreaseImage(creases);
             setPhase('result');
@@ -304,6 +320,7 @@ const App = () => {
                         image={animationData.image}
                         direction={animationData.dir}
                         onComplete={handleAnimationComplete}
+                        bounds={animationData.bounds}
                      />
                    )}
                </div>
@@ -390,6 +407,7 @@ const App = () => {
                     brushSize={brushSize}
                     onBrushSizeChange={setBrushSize}
                     onUndo={() => canvasRef.current?.undo()}
+                    onRedo={() => canvasRef.current?.redo()}
                     onClear={handleResetFolds}
                     onShow={handleShowResult}
                     isShowingResult={phase === 'result'}

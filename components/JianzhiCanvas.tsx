@@ -17,6 +17,7 @@ export interface JianzhiCanvasHandle {
   getCanvas: () => HTMLCanvasElement | null;
   clear: () => void;
   undo: () => void;
+  redo: () => void;
   saveState: () => void;
 }
 
@@ -30,17 +31,20 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
     const startPoint = useRef<Point | null>(null);
     const lastPoint = useRef<Point | null>(null);
     
-    // History for Undo
+    // History stacks
     const historyStack = useRef<ImageData[]>([]);
+    const redoStack = useRef<ImageData[]>([]);
 
     const saveToHistory = () => {
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d');
       if (canvas && ctx) {
-        if (historyStack.current.length > 10) {
-          historyStack.current.shift(); // Keep max 10 steps
+        if (historyStack.current.length > 20) {
+          historyStack.current.shift(); // Keep max 20 steps
         }
         historyStack.current.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        // New action clears redo stack
+        redoStack.current = [];
       }
     };
 
@@ -63,9 +67,29 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
          const canvas = canvasRef.current;
          const ctx = canvas?.getContext('2d');
          if (canvas && ctx && historyStack.current.length > 0) {
+            // Save current state to redo stack before undoing
+            const currentState = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            redoStack.current.push(currentState);
+
+            // Restore previous state
             const previousState = historyStack.current.pop();
             if (previousState) {
                 ctx.putImageData(previousState, 0, 0);
+            }
+         }
+      },
+      redo: () => {
+         const canvas = canvasRef.current;
+         const ctx = canvas?.getContext('2d');
+         if (canvas && ctx && redoStack.current.length > 0) {
+            // Save current state to history stack before redoing
+            const currentState = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            historyStack.current.push(currentState);
+
+            // Restore next state
+            const nextState = redoStack.current.pop();
+            if (nextState) {
+                ctx.putImageData(nextState, 0, 0);
             }
          }
       },
@@ -83,7 +107,10 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
            } else {
              fillCanvas(ctx, width, height, '#DC2626');
            }
-           saveToHistory();
+           // Don't call saveToHistory here to avoid pushing initial state twice if onInit does something
+           // But we need initial state for undo to blank.
+           // Manually push initial state without clearing redo (though it's empty anyway)
+           historyStack.current.push(ctx.getImageData(0, 0, width, height));
         }
       }
     }, [width, height, onInit]);
