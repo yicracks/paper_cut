@@ -300,6 +300,10 @@ export class PaperSimulation implements SimulationEngine {
   }
 
   public applyCutAndUnfold(userCutCanvas: HTMLCanvasElement, color: string): string {
+    // Reset cut state because this is a fresh application of the current canvas state.
+    // This allows undo operations (restoring pixels) to be correctly processed.
+    this.originalPixelsState.fill(1);
+
     const ctx = userCutCanvas.getContext('2d');
     if (!ctx) return '';
     

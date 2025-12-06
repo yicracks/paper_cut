@@ -6,14 +6,12 @@ export const TEXT = {
     appTitle: "Paper Cut Art",
     step_fold: "fold",
     step_cut: "cut",
-    step_show: "show",
     
     // Controls
     tools: "Tools",
     undo: "Undo",
     redo: "Redo",
     thickness: "Line Thickness",
-    showResult: "Show Result",
     startOver: "Start Over",
     download: "Download",
     
@@ -78,14 +76,12 @@ export const TEXT = {
     appTitle: "数字剪纸艺术",
     step_fold: "折叠",
     step_cut: "剪裁",
-    step_show: "展示",
     
     // Controls
     tools: "工具栏",
     undo: "撤回",
     redo: "重做",
     thickness: "线条粗细",
-    showResult: "查看成品",
     startOver: "重新开始",
     download: "下载保存",
     

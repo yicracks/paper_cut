@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { 
-    Scissors, RotateCcw, Eye, Download, Undo2, Redo2,
+    Scissors, RotateCcw, Download, Undo2, Redo2,
     Minus, Square, Circle, Triangle, Brush, Star
 } from 'lucide-react';
 import { DrawingTool, Language } from '../types';
@@ -15,8 +15,6 @@ interface ControlsProps {
   onUndo: () => void;
   onRedo: () => void;
   onClear: () => void;
-  onShow: () => void;
-  isShowingResult: boolean;
   onDownload?: () => void;
   themeColor?: string;
   language: Language;
@@ -30,8 +28,6 @@ const Controls: React.FC<ControlsProps> = ({
   onUndo,
   onRedo,
   onClear,
-  onShow,
-  isShowingResult,
   onDownload,
   themeColor,
   language
@@ -63,7 +59,6 @@ const Controls: React.FC<ControlsProps> = ({
   return (
     <div className="flex flex-col gap-4 w-full max-w-sm mx-auto p-4 bg-white rounded-xl shadow-lg border border-zinc-100">
       
-      {!isShowingResult && (
         <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-4">
                 {/* Visual Title */}
@@ -149,20 +144,9 @@ const Controls: React.FC<ControlsProps> = ({
                 <ToolButton t="star" icon={Star} />
             </div>
         </div>
-      )}
 
-      <div className={`pt-2 ${!isShowingResult ? 'border-t border-zinc-100' : ''} flex gap-2 ${isShowingResult ? 'justify-center' : ''}`}>
-        {!isShowingResult ? (
-          <button
-            onClick={onShow}
-            style={primaryButtonStyle}
-            className={`flex-1 ${!themeColor && 'bg-gradient-to-r from-red-600 to-red-500'} text-white hover:shadow-red-500/30 hover:scale-[1.02] py-4 rounded-xl text-lg font-bold tracking-wide transition-all flex items-center justify-center gap-2 shadow-lg`}
-            title={t.showResult}
-          >
-            <Eye size={24} />
-          </button>
-        ) : (
-          <>
+      {/* Footer Actions: Reset & Download */}
+      <div className="pt-2 border-t border-zinc-100 flex gap-2">
             <button
               onClick={onClear}
               className="w-20 rounded-xl bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-red-600 transition-all flex items-center justify-center"
@@ -181,8 +165,6 @@ const Controls: React.FC<ControlsProps> = ({
                 <Download size={24} />
               </button>
             )}
-          </>
-        )}
       </div>
     </div>
   );

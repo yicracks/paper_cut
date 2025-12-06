@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Scissors, Settings, Languages } from 'lucide-react';
+import { Scissors, Settings, Languages, ArrowRight } from 'lucide-react';
 import JianzhiCanvas, { JianzhiCanvasHandle } from './components/JianzhiCanvas';
 import Controls from './components/Controls';
 import FoldingControls from './components/FoldingControls';
@@ -13,7 +13,7 @@ import { saveToGallery } from './utils/db';
 import { TEXT } from './utils/i18n';
 
 const App = () => {
-  const [phase, setPhase] = useState<'folding' | 'cutting' | 'result'>('folding');
+  const [phase, setPhase] = useState<'folding' | 'cutting'>('folding');
   
   // Language State
   const [language, setLanguage] = useState<Language>('en');
@@ -22,9 +22,9 @@ const App = () => {
   const [tool, setTool] = useState<DrawingTool>('brush');
   const [brushSize, setBrushSize] = useState(15);
   
-  const [resultImage, setResultImage] = useState<string | null>(null);
-  const [creaseImage, setCreaseImage] = useState<string | null>(null);
-  
+  // Live Preview State for Cutting Phase
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   // Folding State
   const [mode, setMode] = useState<FoldingMode>('custom');
   const [foldCount, setFoldCount] = useState(0); 
@@ -38,7 +38,7 @@ const App = () => {
     dir: FoldDirection,
     bounds: { minX: number, maxX: number, minY: number, maxY: number }
   } | null>(null);
-
+  
   // Paper Appearance
   const [paperColor, setPaperColor] = useState('#DC2626');
 
@@ -156,8 +156,7 @@ const App = () => {
         simulationRef.current = new PresetSimulation(SIM_SIZE, selectedPreset);
     }
     
-    setResultImage(null);
-    setCreaseImage(null);
+    setPreviewImage(null);
     setPhase('folding');
     setIsAnimating(false);
     setAnimationData(null);
@@ -171,26 +170,26 @@ const App = () => {
 
   const handleFinishFolding = () => {
     setPhase('cutting');
+    // Trigger initial preview generation
+    setTimeout(updatePreview, 50);
   };
 
-  const handleShowResult = () => {
-    if (phase === 'result') {
-      setPhase('cutting');
-    } else {
-      const cutCanvas = canvasRef.current?.getCanvas();
-      if (cutCanvas && simulationRef.current) {
-        setTimeout(() => {
-            const texture = simulationRef.current!.applyCutAndUnfold(cutCanvas, paperColor);
-            const creases = simulationRef.current!.generateCreaseOverlay(cutCanvas, paperColor);
-            setResultImage(texture);
-            setCreaseImage(creases);
-            setPhase('result');
-        }, 10);
-      }
+  const updatePreview = () => {
+    const cutCanvas = canvasRef.current?.getCanvas();
+    if (cutCanvas && simulationRef.current) {
+        const texture = simulationRef.current.applyCutAndUnfold(cutCanvas, paperColor);
+        setPreviewImage(texture);
     }
   };
 
   const handleDownload = async () => {
+      const cutCanvas = canvasRef.current?.getCanvas();
+      if (!cutCanvas || !simulationRef.current) return;
+
+      // Generate Final High Res Result
+      const finalResultImage = simulationRef.current.applyCutAndUnfold(cutCanvas, paperColor);
+      const cutDataUrl = cutCanvas.toDataURL();
+
       const timestampStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
       const timestamp = Date.now();
       let nameInfo = '';
@@ -200,19 +199,14 @@ const App = () => {
           nameInfo = foldSequence.length > 0 ? `custom-${foldSequence.join('-')}` : 'custom-blank';
       }
       
-      const cutCanvas = canvasRef.current?.getCanvas();
-      const cutDataUrl = cutCanvas ? cutCanvas.toDataURL() : undefined;
-
       // 1. Download Result Image
-      if(resultImage) {
-          const link = document.createElement('a');
-          link.download = `jianzhi-result-${nameInfo}-${timestampStr}.png`;
-          link.href = resultImage;
-          link.click();
-      }
+      const link = document.createElement('a');
+      link.download = `jianzhi-result-${nameInfo}-${timestampStr}.png`;
+      link.href = finalResultImage;
+      link.click();
 
       // 2. Download Cut Pattern (if enabled)
-      if (appSettings.saveCutPattern && cutDataUrl) {
+      if (appSettings.saveCutPattern) {
           setTimeout(() => {
               const link2 = document.createElement('a');
               link2.download = `jianzhi-pattern-${nameInfo}-${timestampStr}.png`;
@@ -222,26 +216,25 @@ const App = () => {
       }
 
       // 3. Save to In-App Gallery
-      if (resultImage) {
-        await saveToGallery({
+      await saveToGallery({
           id: timestamp.toString(),
           timestamp,
-          resultImage,
+          resultImage: finalResultImage,
           cutImage: cutDataUrl,
           name: nameInfo,
           foldMode: mode === 'preset' ? `${selectedPreset}-Fold` : 'Custom Fold'
-        });
-      }
+      });
   };
 
   const initCutCanvas = useCallback((ctx: CanvasRenderingContext2D) => {
       if (simulationRef.current) {
           simulationRef.current.renderActiveCutState(ctx, paperColor);
+          // Trigger preview update on init
+          setTimeout(updatePreview, 10);
       }
   }, [paperColor]); 
 
   const StepIndicator = ({ step, label, isActive }: { step: string, label: string, isActive: boolean }) => {
-      // Dynamic Theme support for active step
       const activeColorStyle = (isActive && appSettings.dynamicTheme) ? { color: paperColor } : {};
       const barStyle = (isActive && appSettings.dynamicTheme) ? { backgroundColor: paperColor } : {};
 
@@ -289,7 +282,6 @@ const App = () => {
                 <div className="flex gap-8">
                     <StepIndicator step="folding" label={t.step_fold} isActive={phase === 'folding'} />
                     <StepIndicator step="cutting" label={t.step_cut} isActive={phase === 'cutting'} />
-                    <StepIndicator step="result" label={t.step_show} isActive={phase === 'result'} />
                 </div>
             </div>
 
@@ -316,87 +308,85 @@ const App = () => {
       <main className="max-w-5xl mx-auto mt-8 px-4 flex flex-col items-center gap-8">
         
         {/* WORKSPACE */}
-        <div className="relative w-full h-[600px] bg-white/50 rounded-xl border-2 border-dashed border-zinc-200 overflow-hidden group">
+        <div className={`relative w-full transition-all duration-500 ${phase === 'cutting' ? 'max-w-5xl' : 'max-w-[600px]'}`}>
            
            {/* FOLDING VISUALIZER (PHASE 1) */}
-           <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${phase === 'folding' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
-               <div 
-                  className="relative bg-white shadow-inner border border-zinc-100"
-                  style={{ width: VISUAL_SIZE, height: VISUAL_SIZE }}
-               >
-                   <div className="absolute inset-0 border border-zinc-100 bg-zinc-50 opacity-50"></div>
-                   <canvas 
-                        ref={foldCanvasRef}
-                        width={VISUAL_SIZE}
-                        height={VISUAL_SIZE}
-                        className="absolute inset-0 w-full h-full"
-                   />
-                   
-                   {/* 3D Animation Overlay */}
-                   {isAnimating && animationData && (
-                     <FoldAnimator 
-                        image={animationData.image}
-                        direction={animationData.dir}
-                        onComplete={handleAnimationComplete}
-                        bounds={animationData.bounds}
-                     />
-                   )}
+           {phase === 'folding' && (
+               <div className="relative w-full h-[600px] bg-white/50 rounded-xl border-2 border-dashed border-zinc-200 overflow-hidden flex items-center justify-center animate-in fade-in duration-500">
+                   <div 
+                      className="relative bg-white shadow-inner border border-zinc-100"
+                      style={{ width: VISUAL_SIZE, height: VISUAL_SIZE }}
+                   >
+                       <div className="absolute inset-0 border border-zinc-100 bg-zinc-50 opacity-50"></div>
+                       <canvas 
+                            ref={foldCanvasRef}
+                            width={VISUAL_SIZE}
+                            height={VISUAL_SIZE}
+                            className="absolute inset-0 w-full h-full"
+                       />
+                       
+                       {/* 3D Animation Overlay with Faster Duration (300ms) */}
+                       {isAnimating && animationData && (
+                         <FoldAnimator 
+                            image={animationData.image}
+                            direction={animationData.dir}
+                            onComplete={handleAnimationComplete}
+                            bounds={animationData.bounds}
+                            duration={300} 
+                         />
+                       )}
+                   </div>
                </div>
-           </div>
+           )}
 
-           {/* CUTTING CANVAS (PHASE 2 & 3) */}
-           <div 
-                className={`absolute transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] origin-bottom-left
-                    ${phase === 'folding' ? 'opacity-0 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none' : ''}
-                    ${phase === 'cutting' ? 'opacity-100 scale-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20' : ''}
-                    ${phase === 'result'  ? 'opacity-100 scale-[0.3] bottom-8 left-12 z-30 shadow-2xl border-4 border-white ring-1 ring-zinc-200/50 pointer-events-none' : ''}
-                `}
-           >
-                {(phase === 'cutting' || phase === 'result') && (
-                    <div 
-                        className="bg-white shadow-lg"
-                        style={{ 
-                            width: VISUAL_SIZE,
-                            height: VISUAL_SIZE,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            overflow: 'hidden'
-                        }} 
-                    >
-                        <JianzhiCanvas
-                            ref={canvasRef}
-                            width={SIM_SIZE}
-                            height={SIM_SIZE}
-                            tool={tool}
-                            brushSize={brushSize}
-                            onInit={initCutCanvas}
-                        />
-                    </div>
-                )}
-           </div>
-
-            {/* RESULT VIEW (PHASE 3) */}
-            <div className={`absolute inset-0 z-10 flex items-center justify-center transition-all duration-700 ${phase === 'result' ? 'opacity-100 pl-48 pb-4' : 'opacity-0 pointer-events-none scale-95'}`}>
-                {phase === 'result' && resultImage && (
-                    <div className="relative w-full h-full p-4 flex items-center justify-center">
-                        <div className="relative max-w-full max-h-full aspect-square drop-shadow-2xl">
-                             <img 
-                                 src={resultImage} 
-                                 alt="Unfolded Result" 
-                                 className="w-full h-full object-contain" 
-                             />
-                             {creaseImage && (
-                                <img
-                                    src={creaseImage}
-                                    alt=""
-                                    className="absolute inset-0 w-full h-full object-contain pointer-events-none mix-blend-screen"
-                                />
-                             )}
+           {/* CUTTING PHASE (PHASE 2) - SPLIT VIEW */}
+           {phase === 'cutting' && (
+                <div className="flex flex-col md:flex-row items-center justify-center gap-8 animate-in slide-in-from-bottom-8 duration-500">
+                    
+                    {/* Left: Interactive Canvas */}
+                    <div className="relative flex flex-col items-center gap-2">
+                        <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">{t.step_cut}</span>
+                        <div className="bg-white p-2 rounded-xl shadow-lg border border-zinc-100">
+                             <JianzhiCanvas
+                                ref={canvasRef}
+                                width={SIM_SIZE}
+                                height={SIM_SIZE}
+                                tool={tool}
+                                brushSize={brushSize}
+                                onInit={initCutCanvas}
+                                onInteractEnd={updatePreview} 
+                            />
                         </div>
                     </div>
-                )}
-            </div>
+
+                    {/* Arrow Indicator */}
+                    <div className="text-zinc-300 hidden md:block">
+                        <ArrowRight size={32} />
+                    </div>
+
+                    {/* Right: Real-time Preview */}
+                    <div className="relative flex flex-col items-center gap-2">
+                         {/* We can use the text "SHOW" or "PREVIEW" here, user removed SHOW step but this is the show area */}
+                         <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Preview</span>
+                         <div className="bg-white p-2 rounded-xl shadow-lg border border-zinc-100 w-[500px] h-[500px] flex items-center justify-center overflow-hidden bg-zinc-50/50">
+                            {previewImage ? (
+                                <img 
+                                    src={previewImage} 
+                                    alt="Preview" 
+                                    className="max-w-full max-h-full object-contain drop-shadow-md" 
+                                />
+                            ) : (
+                                <div className="text-zinc-300 flex flex-col items-center gap-2">
+                                    <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center">
+                                        <Settings size={20} className="animate-spin-slow" />
+                                    </div>
+                                    <span className="text-sm">Generating Preview...</span>
+                                </div>
+                            )}
+                         </div>
+                    </div>
+                </div>
+           )}
 
         </div>
 
@@ -425,11 +415,9 @@ const App = () => {
                     onToolChange={setTool}
                     brushSize={brushSize}
                     onBrushSizeChange={setBrushSize}
-                    onUndo={() => canvasRef.current?.undo()}
-                    onRedo={() => canvasRef.current?.redo()}
+                    onUndo={() => { canvasRef.current?.undo(); updatePreview(); }}
+                    onRedo={() => { canvasRef.current?.redo(); updatePreview(); }}
                     onClear={handleResetFolds}
-                    onShow={handleShowResult}
-                    isShowingResult={phase === 'result'}
                     onDownload={handleDownload}
                     themeColor={dynamicThemeColor}
                     language={language}
