@@ -30,6 +30,16 @@ export const TEXT = {
     fold_BR: "Bottom-Right",
     changeColor: "Change Paper Color",
     
+    // Hints
+    hint_fold: "Choose a direction to fold the paper.",
+    hint_cut: "Now you can start drawing/cutting.",
+    
+    // Interactive Guides
+    guide_fold_up: "Try folding Up",
+    guide_fold_up_sub: "Click to start folding",
+    guide_cut_canvas: "Start Drawing Here",
+    guide_cut_canvas_sub: "Draw lines or shapes to cut",
+
     // Settings Sidebar
     settingsTitle: "Settings",
     tab_tutorial: "Tutorial",
@@ -99,6 +109,16 @@ export const TEXT = {
     fold_DOWN: "下",
     fold_BR: "右下",
     changeColor: "更换纸张颜色",
+    
+    // Hints
+    hint_fold: "可以选择方向进行折叠",
+    hint_cut: "现在可以开始作图了",
+    
+    // Interactive Guides
+    guide_fold_up: "试试向上折叠",
+    guide_fold_up_sub: "点击此处开始",
+    guide_cut_canvas: "在此处作图",
+    guide_cut_canvas_sub: "画出线条或形状来剪纸",
     
     // Settings Sidebar
     settingsTitle: "设置",

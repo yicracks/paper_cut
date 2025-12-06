@@ -19,6 +19,8 @@ interface FoldingControlsProps {
   onColorChange: (color: string) => void;
   themeColor?: string;
   language: Language;
+  activeGuide?: boolean; // Is the guide active for 'fold_up'?
+  onDismissGuide?: () => void;
 }
 
 const FoldingControls: React.FC<FoldingControlsProps> = ({ 
@@ -35,7 +37,9 @@ const FoldingControls: React.FC<FoldingControlsProps> = ({
   paperColor,
   onColorChange,
   themeColor,
-  language
+  language,
+  activeGuide,
+  onDismissGuide
 }) => {
   const t = TEXT[language];
 
@@ -43,11 +47,12 @@ const FoldingControls: React.FC<FoldingControlsProps> = ({
     const disabled = !canFold(dir);
     // @ts-ignore
     const label = t[labelKey] || labelKey;
-    return (
+
+    const btn = (
       <button
         onClick={() => onFold(dir)}
         disabled={disabled}
-        className={`flex items-center justify-center p-4 rounded-lg transition-all aspect-square ${
+        className={`flex items-center justify-center p-4 rounded-lg transition-all aspect-square w-full h-full ${
           disabled 
             ? 'bg-zinc-50 text-zinc-200 cursor-not-allowed' 
             : 'bg-white shadow-sm hover:shadow-md hover:bg-red-50 text-zinc-600 hover:text-red-600 border border-zinc-100'
@@ -57,6 +62,38 @@ const FoldingControls: React.FC<FoldingControlsProps> = ({
         <Icon size={24} strokeWidth={2} />
       </button>
     );
+
+    // If this is the UP button and guide is active, wrap it
+    if (dir === 'UP' && activeGuide) {
+        return (
+            <div className="relative z-50">
+                {/* The Button */}
+                {btn}
+                
+                {/* Highlight Ring */}
+                <div 
+                    className="absolute inset-0 -m-1 border-4 border-red-500 rounded-xl animate-pulse pointer-events-none"
+                    style={{ zIndex: 60 }}
+                ></div>
+
+                {/* Tooltip Bubble */}
+                <div 
+                    className="absolute -top-16 left-1/2 -translate-x-1/2 w-32 bg-red-600 text-white text-xs p-2 rounded-lg shadow-xl text-center cursor-pointer animate-in fade-in slide-in-from-bottom-2"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDismissGuide?.();
+                    }}
+                >
+                    <div className="font-bold mb-0.5">{t.guide_fold_up}</div>
+                    <div className="opacity-90 text-[10px]">{t.guide_fold_up_sub}</div>
+                    {/* Arrow pointer */}
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-600 rotate-45"></div>
+                </div>
+            </div>
+        );
+    }
+
+    return btn;
   };
 
   const PresetButton = ({ count, icon: Icon }: { count: number, icon: any }) => {
@@ -119,7 +156,7 @@ const FoldingControls: React.FC<FoldingControlsProps> = ({
       </div>
 
       {mode === 'custom' ? (
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-3 mb-6 relative">
             {/* Top Row */}
             <Button dir="TL" icon={CornerLeftUp} labelKey="fold_TL" />
             <Button dir="UP" icon={ArrowUp} labelKey="fold_UP" />

@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Scissors, Settings, Languages, ArrowRight } from 'lucide-react';
+import { Scissors, Settings, Languages, ArrowRight, Hand } from 'lucide-react';
 import JianzhiCanvas, { JianzhiCanvasHandle } from './components/JianzhiCanvas';
 import Controls from './components/Controls';
 import FoldingControls from './components/FoldingControls';
@@ -49,6 +49,11 @@ const App = () => {
     dynamicTheme: false
   });
 
+  // Interactive Guide State
+  const [activeGuide, setActiveGuide] = useState<'fold_up' | 'cut_canvas' | null>(null);
+  // Track if we have SHOWN and COMPLETED the guides
+  const guideHistory = useRef({ fold: false, cut: false });
+
   const SIM_SIZE = 500;
   const simulationRef = useRef<SimulationEngine | null>(null);
   const foldCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -63,6 +68,34 @@ const App = () => {
   const canvasRef = useRef<JianzhiCanvasHandle>(null);
 
   const t = TEXT[language];
+
+  // Logic to trigger guides
+  useEffect(() => {
+      // Trigger Fold Guide (only if custom mode and not seen yet)
+      if (phase === 'folding' && mode === 'custom' && !guideHistory.current.fold) {
+          // Small delay to let UI settle
+          const timer = setTimeout(() => {
+              setActiveGuide('fold_up');
+          }, 500);
+          return () => clearTimeout(timer);
+      }
+      
+      // Trigger Cut Guide
+      if (phase === 'cutting' && !guideHistory.current.cut) {
+          const timer = setTimeout(() => {
+              setActiveGuide('cut_canvas');
+          }, 500);
+          return () => clearTimeout(timer);
+      }
+  }, [phase, mode]);
+
+  const dismissGuide = (guide: 'fold_up' | 'cut_canvas') => {
+      if (activeGuide === guide) {
+          setActiveGuide(null);
+          if (guide === 'fold_up') guideHistory.current.fold = true;
+          if (guide === 'cut_canvas') guideHistory.current.cut = true;
+      }
+  };
 
   useEffect(() => {
     if (phase === 'folding' && foldCanvasRef.current && simulationRef.current && !isAnimating) {
@@ -85,6 +118,9 @@ const App = () => {
           ctx?.clearRect(0, 0, VISUAL_SIZE, VISUAL_SIZE);
           simulationRef.current.renderFoldedState(foldCanvasRef.current, paperColor);
       }
+      
+      // Dismiss guide if changing mode
+      if (activeGuide === 'fold_up') dismissGuide('fold_up');
   };
 
   const handlePresetSelect = (preset: number) => {
@@ -114,6 +150,8 @@ const App = () => {
   }, []);
 
   const handleFold = (dir: FoldDirection) => {
+    if (activeGuide === 'fold_up') dismissGuide('fold_up');
+
     if (mode === 'preset' || !simulationRef.current || isAnimating) return;
     
     // Capture current state for animation
@@ -160,6 +198,9 @@ const App = () => {
     setPhase('folding');
     setIsAnimating(false);
     setAnimationData(null);
+    // Reset guide history for fold so it can show again on restart? 
+    // Usually tutorials show once, but since it's "Start Over", maybe keeping it hidden is better for flow.
+    // guideHistory.current.fold = false; 
     
     if (foldCanvasRef.current && simulationRef.current) {
         const ctx = foldCanvasRef.current.getContext('2d');
@@ -258,6 +299,11 @@ const App = () => {
     setLanguage(prev => prev === 'en' ? 'zh' : 'en');
   };
 
+  // Handler for canvas click to dismiss cut guide
+  const handleCanvasContainerClick = () => {
+      if (activeGuide === 'cut_canvas') dismissGuide('cut_canvas');
+  };
+
   return (
     <div className="min-h-screen bg-grid-pattern text-zinc-800 pb-20">
       <header className="bg-white border-b border-zinc-200 pt-4 pb-2 px-6 sticky top-0 z-40 shadow-sm">
@@ -346,16 +392,46 @@ const App = () => {
                     {/* Left: Interactive Canvas */}
                     <div className="relative flex flex-col items-center gap-2">
                         <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">{t.step_cut}</span>
-                        <div className="bg-white p-2 rounded-xl shadow-lg border border-zinc-100">
-                             <JianzhiCanvas
-                                ref={canvasRef}
-                                width={SIM_SIZE}
-                                height={SIM_SIZE}
-                                tool={tool}
-                                brushSize={brushSize}
-                                onInit={initCutCanvas}
-                                onInteractEnd={updatePreview} 
-                            />
+                        
+                        {/* Wrapper for Guide Overlay */}
+                        <div className="relative">
+                            <div 
+                                className="bg-white p-2 rounded-xl shadow-lg border border-zinc-100 z-10"
+                                onClick={handleCanvasContainerClick}
+                            >
+                                <JianzhiCanvas
+                                    ref={canvasRef}
+                                    width={SIM_SIZE}
+                                    height={SIM_SIZE}
+                                    tool={tool}
+                                    brushSize={brushSize}
+                                    onInit={initCutCanvas}
+                                    onInteractEnd={updatePreview} 
+                                    onInteractStart={() => dismissGuide('cut_canvas')}
+                                />
+                            </div>
+
+                            {/* Intelligent Cut Guide Overlay */}
+                            {activeGuide === 'cut_canvas' && (
+                                <div 
+                                    className="absolute inset-0 z-50 flex items-center justify-center cursor-pointer pointer-events-none"
+                                >
+                                    {/* Pulse Ring */}
+                                    <div className="absolute inset-0 border-4 border-red-400 rounded-xl animate-pulse opacity-50"></div>
+                                    
+                                    {/* Tooltip */}
+                                    <div 
+                                        className="bg-red-600 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-3 animate-in fade-in zoom-in-90 duration-300 pointer-events-auto"
+                                        onClick={() => dismissGuide('cut_canvas')}
+                                    >
+                                        <Hand size={20} className="animate-bounce" />
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-sm">{t.guide_cut_canvas}</span>
+                                            <span className="text-[10px] opacity-90">{t.guide_cut_canvas_sub}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -366,7 +442,6 @@ const App = () => {
 
                     {/* Right: Real-time Preview */}
                     <div className="relative flex flex-col items-center gap-2">
-                         {/* We can use the text "SHOW" or "PREVIEW" here, user removed SHOW step but this is the show area */}
                          <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Preview</span>
                          <div className="bg-white p-2 rounded-xl shadow-lg border border-zinc-100 w-[500px] h-[500px] flex items-center justify-center overflow-hidden bg-zinc-50/50">
                             {previewImage ? (
@@ -408,6 +483,8 @@ const App = () => {
                     onColorChange={setPaperColor}
                     themeColor={dynamicThemeColor}
                     language={language}
+                    activeGuide={activeGuide === 'fold_up'}
+                    onDismissGuide={() => dismissGuide('fold_up')}
                 />
             ) : (
                 <Controls 
