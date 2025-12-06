@@ -349,35 +349,48 @@ const App = () => {
       icon: Icon, 
       onClick, 
       passThrough = false,
-      placement = 'center' 
+      placement = 'center',
+      targetPos
   }: { 
       text: string, 
       subtext: string, 
       icon: any, 
       onClick?: () => void,
       passThrough?: boolean,
-      placement?: 'center' | 'top' | 'bottom'
+      placement?: 'center' | 'top' | 'bottom',
+      targetPos?: { x: number, y: number }
   }) => {
       let alignClass = 'items-center justify-center';
       if (placement === 'top') alignClass = 'items-start justify-center pt-12';
       if (placement === 'bottom') alignClass = 'items-end justify-center pb-12';
 
+      const isTargeted = !!targetPos;
+
       return (
         <div 
-            className={`absolute inset-0 z-50 flex ${alignClass} ${passThrough ? 'pointer-events-none' : 'cursor-pointer'}`}
+            className={`absolute inset-0 z-50 ${isTargeted ? '' : 'flex ' + alignClass} ${passThrough ? 'pointer-events-none' : 'cursor-pointer'}`}
             onClick={passThrough ? undefined : onClick}
         >
-            {/* Pulse Ring (Center regardless of placement for visual anchor on the area) */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                 <div className="w-full h-full border-4 border-red-400 rounded-xl animate-pulse opacity-20"></div>
-            </div>
+            <div 
+                className={isTargeted ? "absolute flex flex-col items-center justify-center" : "relative flex flex-col items-center justify-center"}
+                style={isTargeted ? { left: targetPos!.x, top: targetPos!.y, transform: 'translate(-50%, -50%)' } : {}}
+            >
+                {/* Pulse Ring */}
+                {isTargeted ? (
+                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 border-4 border-red-400 rounded-full animate-pulse opacity-40 pointer-events-none"></div>
+                ) : (
+                     <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
+                         <div className="w-full h-full border-4 border-red-400 rounded-xl animate-pulse opacity-20"></div>
+                     </div>
+                )}
             
-            {/* Tooltip */}
-            <div className={`bg-red-600 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-3 animate-in fade-in zoom-in-90 duration-300 pointer-events-auto ${passThrough ? 'pointer-events-none opacity-90' : ''}`}>
-                <Icon size={20} className="animate-bounce" />
-                <div className="flex flex-col">
-                    <span className="font-bold text-sm">{text}</span>
-                    <span className="text-[10px] opacity-90">{subtext}</span>
+                {/* Tooltip */}
+                <div className={`bg-red-600 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-3 animate-in fade-in zoom-in-90 duration-300 pointer-events-auto relative z-10 ${passThrough ? 'pointer-events-none opacity-90' : ''}`}>
+                    <Icon size={20} className="animate-bounce" />
+                    <div className="flex flex-col whitespace-nowrap">
+                        <span className="font-bold text-sm">{text}</span>
+                        <span className="text-[10px] opacity-90">{subtext}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -385,6 +398,28 @@ const App = () => {
   };
 
   const isSaveGuide = activeGuideStep === 'cut_save';
+
+  const getCutGuidePos = () => {
+      if (activeGuideStep !== 'cut_canvas') return undefined;
+      
+      if (mode === 'custom' && simulationRef.current instanceof PaperSimulation) {
+          const sim = simulationRef.current;
+          return {
+              x: (sim.minX + sim.maxX) / 2,
+              y: (sim.minY + sim.maxY) / 2
+          };
+      } else if (mode === 'preset') {
+          // Preset always centers at canvas center, pointing up
+          // A good spot is roughly up the wedge
+          const r = (SIM_SIZE / 2) * 0.95;
+          return {
+              x: SIM_SIZE / 2,
+              y: SIM_SIZE / 2 - (r * 0.5) 
+          };
+      }
+      return undefined;
+  };
+  const cutGuidePos = getCutGuidePos();
 
   return (
     <div className="min-h-screen bg-grid-pattern text-zinc-800 pb-20">
@@ -533,7 +568,7 @@ const App = () => {
                                     subtext={t.guide_cut_canvas_sub}
                                     icon={Hand}
                                     passThrough={true}
-                                    placement="center"
+                                    targetPos={cutGuidePos}
                                     onClick={() => {}} 
                                 />
                             )}
