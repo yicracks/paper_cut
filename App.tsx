@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Scissors, Settings, Languages, ArrowRight, Hand } from 'lucide-react';
+import { Scissors, Settings, Languages, ArrowRight, Hand, Eye, Download, Brush } from 'lucide-react';
 import JianzhiCanvas, { JianzhiCanvasHandle } from './components/JianzhiCanvas';
 import Controls from './components/Controls';
 import FoldingControls from './components/FoldingControls';
@@ -45,14 +45,19 @@ const App = () => {
   // Settings State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [appSettings, setAppSettings] = useState<AppSettings>({
-    saveCutPattern: true,
     dynamicTheme: false
   });
 
-  // Interactive Guide State
-  const [activeGuide, setActiveGuide] = useState<'fold_up' | 'cut_canvas' | null>(null);
-  // Track if we have SHOWN and COMPLETED the guides
-  const guideHistory = useRef({ fold: false, cut: false });
+  // Interactive Guide State Sequence
+  // FOLD: fold_up -> fold_right -> fold_br -> fold_finish
+  // CUT: cut_tool -> cut_canvas -> cut_preview -> cut_save
+  const [activeGuideStep, setActiveGuideStep] = useState<string | null>(null);
+  
+  // Track completion to ensure we don't show it every time
+  const guideHistory = useRef({ 
+      foldStarted: false,
+      cutStarted: false
+  });
 
   const SIM_SIZE = 500;
   const simulationRef = useRef<SimulationEngine | null>(null);
@@ -71,29 +76,29 @@ const App = () => {
 
   // Logic to trigger guides
   useEffect(() => {
-      // Trigger Fold Guide (only if custom mode and not seen yet)
-      if (phase === 'folding' && mode === 'custom' && !guideHistory.current.fold) {
-          // Small delay to let UI settle
+      // Trigger Fold Guide Sequence
+      if (phase === 'folding' && mode === 'custom' && !guideHistory.current.foldStarted) {
           const timer = setTimeout(() => {
-              setActiveGuide('fold_up');
+              setActiveGuideStep('fold_up');
+              guideHistory.current.foldStarted = true;
           }, 500);
           return () => clearTimeout(timer);
       }
       
-      // Trigger Cut Guide
-      if (phase === 'cutting' && !guideHistory.current.cut) {
+      // Trigger Cut Guide Sequence
+      if (phase === 'cutting' && !guideHistory.current.cutStarted) {
           const timer = setTimeout(() => {
-              setActiveGuide('cut_canvas');
+              setActiveGuideStep('cut_tool');
+              guideHistory.current.cutStarted = true;
           }, 500);
           return () => clearTimeout(timer);
       }
   }, [phase, mode]);
 
-  const dismissGuide = (guide: 'fold_up' | 'cut_canvas') => {
-      if (activeGuide === guide) {
-          setActiveGuide(null);
-          if (guide === 'fold_up') guideHistory.current.fold = true;
-          if (guide === 'cut_canvas') guideHistory.current.cut = true;
+  // General dismiss
+  const dismissGuide = (stepToDismiss: string) => {
+      if (activeGuideStep === stepToDismiss) {
+          setActiveGuideStep(null);
       }
   };
 
@@ -109,8 +114,15 @@ const App = () => {
           simulationRef.current = new PaperSimulation(SIM_SIZE);
           setFoldCount(0);
           setFoldSequence([]);
+          // If switching back to custom and haven't finished guide, maybe restart? 
+          // For now, let's reset if it was interrupted
+          if (!guideHistory.current.foldStarted) {
+             setTimeout(() => setActiveGuideStep('fold_up'), 500);
+             guideHistory.current.foldStarted = true;
+          }
       } else {
           simulationRef.current = new PresetSimulation(SIM_SIZE, selectedPreset);
+          setActiveGuideStep(null); // No guide for preset
       }
       
       if (foldCanvasRef.current && simulationRef.current) {
@@ -118,9 +130,6 @@ const App = () => {
           ctx?.clearRect(0, 0, VISUAL_SIZE, VISUAL_SIZE);
           simulationRef.current.renderFoldedState(foldCanvasRef.current, paperColor);
       }
-      
-      // Dismiss guide if changing mode
-      if (activeGuide === 'fold_up') dismissGuide('fold_up');
   };
 
   const handlePresetSelect = (preset: number) => {
@@ -140,25 +149,31 @@ const App = () => {
     return simulationRef.current ? simulationRef.current.canFold(dir) : false;
   };
 
-  // Internal helper to apply fold logic after animation
   const executeFold = useCallback((dir: FoldDirection) => {
     if (simulationRef.current?.fold(dir)) {
         setFoldCount(prev => prev + 1);
         setFoldSequence(prev => [...prev, dir]);
     }
-    // Render is handled by useEffect when isAnimating becomes false
   }, []);
 
   const handleFold = (dir: FoldDirection) => {
-    if (activeGuide === 'fold_up') dismissGuide('fold_up');
+    // Advance Guide Sequence
+    if (activeGuideStep === 'fold_up' && dir === 'UP') {
+        setActiveGuideStep('fold_right');
+    } else if (activeGuideStep === 'fold_right' && dir === 'RIGHT') {
+        setActiveGuideStep('fold_br');
+    } else if (activeGuideStep === 'fold_br' && dir === 'BR') {
+        setActiveGuideStep('fold_finish');
+    } else {
+        // If user deviates, we might want to dismiss or adapt. 
+        // For strict tutorial, let's just dismiss if they do something else.
+        if (activeGuideStep) setActiveGuideStep(null);
+    }
 
     if (mode === 'preset' || !simulationRef.current || isAnimating) return;
     
-    // Capture current state for animation
     if (foldCanvasRef.current) {
         const image = foldCanvasRef.current.toDataURL();
-        
-        // Get current bounds from simulation (if available and is PaperSimulation)
         let bounds = { minX: 0, maxX: SIM_SIZE, minY: 0, maxY: SIM_SIZE };
         if (simulationRef.current instanceof PaperSimulation) {
             bounds = {
@@ -172,7 +187,6 @@ const App = () => {
         setAnimationData({ image, dir, bounds });
         setIsAnimating(true);
     } else {
-        // Fallback if ref is missing
         executeFold(dir);
     }
   };
@@ -198,9 +212,6 @@ const App = () => {
     setPhase('folding');
     setIsAnimating(false);
     setAnimationData(null);
-    // Reset guide history for fold so it can show again on restart? 
-    // Usually tutorials show once, but since it's "Start Over", maybe keeping it hidden is better for flow.
-    // guideHistory.current.fold = false; 
     
     if (foldCanvasRef.current && simulationRef.current) {
         const ctx = foldCanvasRef.current.getContext('2d');
@@ -210,8 +221,13 @@ const App = () => {
   };
 
   const handleFinishFolding = () => {
+    if (activeGuideStep === 'fold_finish') {
+        setActiveGuideStep(null); // Will trigger cut sequence on phase change
+    } else {
+        setActiveGuideStep(null);
+    }
+    
     setPhase('cutting');
-    // Trigger initial preview generation
     setTimeout(updatePreview, 50);
   };
 
@@ -220,49 +236,77 @@ const App = () => {
     if (cutCanvas && simulationRef.current) {
         const texture = simulationRef.current.applyCutAndUnfold(cutCanvas, paperColor);
         setPreviewImage(texture);
+        
+        // Advance Cut Guide from Canvas to Preview
+        if (activeGuideStep === 'cut_canvas') {
+            setActiveGuideStep('cut_preview');
+        }
     }
   };
 
-  const handleDownload = async () => {
-      const cutCanvas = canvasRef.current?.getCanvas();
-      if (!cutCanvas || !simulationRef.current) return;
-
-      // Generate Final High Res Result
-      const finalResultImage = simulationRef.current.applyCutAndUnfold(cutCanvas, paperColor);
-      const cutDataUrl = cutCanvas.toDataURL();
-
-      const timestampStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-      const timestamp = Date.now();
-      let nameInfo = '';
+  const getNameInfo = () => {
       if (mode === 'preset') {
-          nameInfo = `${selectedPreset}-fold`;
+          return `${selectedPreset}-fold`;
       } else {
-          nameInfo = foldSequence.length > 0 ? `custom-${foldSequence.join('-')}` : 'custom-blank';
+          return foldSequence.length > 0 ? `custom-${foldSequence.join('-')}` : 'custom-blank';
+      }
+  };
+
+  const getTimestamp = () => {
+      const d = new Date();
+      return {
+          str: d.toISOString().replace(/[:.]/g, '-').slice(0, 19),
+          val: d.getTime()
+      };
+  };
+
+  const handleSaveCut = () => {
+      const cutCanvas = canvasRef.current?.getCanvas();
+      if (!cutCanvas) return;
+
+      const cutDataUrl = cutCanvas.toDataURL();
+      const ts = getTimestamp().str;
+      const name = getNameInfo();
+      
+      const link = document.createElement('a');
+      link.download = `jianzhi-pattern-${name}-${ts}.png`;
+      link.href = cutDataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+  };
+
+  const handleSaveResult = async () => {
+      setActiveGuideStep(null);
+
+      if (!simulationRef.current || !previewImage) return;
+
+      // Ensure high res result
+      const cutCanvas = canvasRef.current?.getCanvas();
+      let finalResultImage = previewImage;
+      const cutImage = cutCanvas ? cutCanvas.toDataURL() : undefined;
+
+      if (cutCanvas) {
+          finalResultImage = simulationRef.current.applyCutAndUnfold(cutCanvas, paperColor);
       }
       
-      // 1. Download Result Image
+      const ts = getTimestamp();
+      const name = getNameInfo();
+      
       const link = document.createElement('a');
-      link.download = `jianzhi-result-${nameInfo}-${timestampStr}.png`;
+      link.download = `jianzhi-result-${name}-${ts.str}.png`;
       link.href = finalResultImage;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
 
-      // 2. Download Cut Pattern (if enabled)
-      if (appSettings.saveCutPattern) {
-          setTimeout(() => {
-              const link2 = document.createElement('a');
-              link2.download = `jianzhi-pattern-${nameInfo}-${timestampStr}.png`;
-              link2.href = cutDataUrl;
-              link2.click();
-          }, 200);
-      }
-
-      // 3. Save to In-App Gallery
+      // Always save to gallery including cut pattern if available
       await saveToGallery({
-          id: timestamp.toString(),
-          timestamp,
+          id: ts.val.toString(),
+          timestamp: ts.val,
           resultImage: finalResultImage,
-          cutImage: cutDataUrl,
-          name: nameInfo,
+          cutImage: cutImage,
+          name: name,
           foldMode: mode === 'preset' ? `${selectedPreset}-Fold` : 'Custom Fold'
       });
   };
@@ -270,7 +314,6 @@ const App = () => {
   const initCutCanvas = useCallback((ctx: CanvasRenderingContext2D) => {
       if (simulationRef.current) {
           simulationRef.current.renderActiveCutState(ctx, paperColor);
-          // Trigger preview update on init
           setTimeout(updatePreview, 10);
       }
   }, [paperColor]); 
@@ -299,19 +342,56 @@ const App = () => {
     setLanguage(prev => prev === 'en' ? 'zh' : 'en');
   };
 
-  // Handler for canvas click to dismiss cut guide
-  const handleCanvasContainerClick = () => {
-      if (activeGuide === 'cut_canvas') dismissGuide('cut_canvas');
+  // Guide Components
+  const GuideOverlay = ({ 
+      text, 
+      subtext, 
+      icon: Icon, 
+      onClick, 
+      passThrough = false,
+      placement = 'center' 
+  }: { 
+      text: string, 
+      subtext: string, 
+      icon: any, 
+      onClick?: () => void,
+      passThrough?: boolean,
+      placement?: 'center' | 'top' | 'bottom'
+  }) => {
+      let alignClass = 'items-center justify-center';
+      if (placement === 'top') alignClass = 'items-start justify-center pt-12';
+      if (placement === 'bottom') alignClass = 'items-end justify-center pb-12';
+
+      return (
+        <div 
+            className={`absolute inset-0 z-50 flex ${alignClass} ${passThrough ? 'pointer-events-none' : 'cursor-pointer'}`}
+            onClick={passThrough ? undefined : onClick}
+        >
+            {/* Pulse Ring (Center regardless of placement for visual anchor on the area) */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                 <div className="w-full h-full border-4 border-red-400 rounded-xl animate-pulse opacity-20"></div>
+            </div>
+            
+            {/* Tooltip */}
+            <div className={`bg-red-600 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-3 animate-in fade-in zoom-in-90 duration-300 pointer-events-auto ${passThrough ? 'pointer-events-none opacity-90' : ''}`}>
+                <Icon size={20} className="animate-bounce" />
+                <div className="flex flex-col">
+                    <span className="font-bold text-sm">{text}</span>
+                    <span className="text-[10px] opacity-90">{subtext}</span>
+                </div>
+            </div>
+        </div>
+      );
   };
+
+  const isSaveGuide = activeGuideStep === 'cut_save';
 
   return (
     <div className="min-h-screen bg-grid-pattern text-zinc-800 pb-20">
       <header className="bg-white border-b border-zinc-200 pt-4 pb-2 px-6 sticky top-0 z-40 shadow-sm">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-            {/* Left Spacer for centering */}
             <div className="w-20"></div>
 
-            {/* Center Content */}
             <div className="flex flex-col items-center gap-4">
                 <div className="flex items-center gap-3">
                     <div 
@@ -331,19 +411,16 @@ const App = () => {
                 </div>
             </div>
 
-            {/* Right Buttons */}
             <div className="w-20 flex justify-end gap-2">
                 <button 
                     onClick={toggleLanguage}
                     className="p-2 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-full transition-colors"
-                    title={language === 'en' ? "Switch to Chinese" : "Switch to English"}
                 >
                     <Languages size={24} />
                 </button>
                 <button 
                     onClick={() => setIsSettingsOpen(true)}
                     className="p-2 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-full transition-colors"
-                    title={t.settingsTitle}
                 >
                     <Settings size={24} />
                 </button>
@@ -351,14 +428,13 @@ const App = () => {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto mt-8 px-4 flex flex-col items-center gap-8">
+      <main className="max-w-6xl mx-auto mt-8 px-4 flex flex-col items-center gap-8">
         
-        {/* WORKSPACE */}
-        <div className={`relative w-full transition-all duration-500 ${phase === 'cutting' ? 'max-w-5xl' : 'max-w-[600px]'}`}>
+        <div className={`relative w-full transition-all duration-500`}>
            
-           {/* FOLDING VISUALIZER (PHASE 1) */}
            {phase === 'folding' && (
-               <div className="relative w-full h-[600px] bg-white/50 rounded-xl border-2 border-dashed border-zinc-200 overflow-hidden flex items-center justify-center animate-in fade-in duration-500">
+             <div className="flex flex-col items-center gap-8 animate-in fade-in duration-500 max-w-lg mx-auto">
+               <div className="relative w-full h-[600px] bg-white/50 rounded-xl border-2 border-dashed border-zinc-200 overflow-hidden flex items-center justify-center">
                    <div 
                       className="relative bg-white shadow-inner border border-zinc-100"
                       style={{ width: VISUAL_SIZE, height: VISUAL_SIZE }}
@@ -371,7 +447,6 @@ const App = () => {
                             className="absolute inset-0 w-full h-full"
                        />
                        
-                       {/* 3D Animation Overlay with Faster Duration (300ms) */}
                        {isAnimating && animationData && (
                          <FoldAnimator 
                             image={animationData.image}
@@ -383,21 +458,52 @@ const App = () => {
                        )}
                    </div>
                </div>
+               
+               <div className="w-full z-20 pb-10">
+                   <FoldingControls 
+                        mode={mode}
+                        onModeChange={handleModeChange}
+                        onFold={handleFold}
+                        canFold={canFold}
+                        onPresetSelect={handlePresetSelect}
+                        selectedPreset={selectedPreset}
+                        onFinish={handleFinishFolding}
+                        onReset={handleResetFolds}
+                        foldCount={foldCount}
+                        maxFolds={MAX_FOLDS}
+                        paperColor={paperColor}
+                        onColorChange={setPaperColor}
+                        themeColor={dynamicThemeColor}
+                        language={language}
+                        activeGuideStep={activeGuideStep}
+                   />
+               </div>
+             </div>
            )}
 
-           {/* CUTTING PHASE (PHASE 2) - SPLIT VIEW */}
            {phase === 'cutting' && (
-                <div className="flex flex-col md:flex-row items-center justify-center gap-8 animate-in slide-in-from-bottom-8 duration-500">
+                <div className="flex flex-col lg:flex-row items-start justify-center gap-12 animate-in slide-in-from-bottom-8 duration-500">
                     
-                    {/* Left: Interactive Canvas */}
-                    <div className="relative flex flex-col items-center gap-2">
-                        <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">{t.step_cut}</span>
+                    {/* Left Column: Canvas + Controls */}
+                    <div className="flex flex-col gap-6 w-[500px]">
                         
-                        {/* Wrapper for Guide Overlay */}
+                        <div className="flex items-center justify-between px-2">
+                             <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">{t.step_cut}</span>
+                             <button 
+                                onClick={handleSaveCut}
+                                className="text-zinc-500 hover:text-red-600 flex items-center gap-1 text-xs font-bold uppercase transition-colors"
+                             >
+                                <Download size={14} />
+                                {t.savePattern}
+                             </button>
+                        </div>
+                        
                         <div className="relative">
                             <div 
-                                className="bg-white p-2 rounded-xl shadow-lg border border-zinc-100 z-10"
-                                onClick={handleCanvasContainerClick}
+                                className="bg-white p-2 rounded-xl shadow-lg border border-zinc-100 z-10 overflow-hidden"
+                                onClick={() => {
+                                    if(activeGuideStep === 'cut_tool') setActiveGuideStep('cut_canvas');
+                                }}
                             >
                                 <JianzhiCanvas
                                     ref={canvasRef}
@@ -407,43 +513,58 @@ const App = () => {
                                     brushSize={brushSize}
                                     onInit={initCutCanvas}
                                     onInteractEnd={updatePreview} 
-                                    onInteractStart={() => dismissGuide('cut_canvas')}
+                                    onInteractStart={() => {}}
                                 />
                             </div>
 
-                            {/* Intelligent Cut Guide Overlay */}
-                            {activeGuide === 'cut_canvas' && (
-                                <div 
-                                    className="absolute inset-0 z-50 flex items-center justify-center cursor-pointer pointer-events-none"
-                                >
-                                    {/* Pulse Ring */}
-                                    <div className="absolute inset-0 border-4 border-red-400 rounded-xl animate-pulse opacity-50"></div>
-                                    
-                                    {/* Tooltip */}
-                                    <div 
-                                        className="bg-red-600 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-3 animate-in fade-in zoom-in-90 duration-300 pointer-events-auto"
-                                        onClick={() => dismissGuide('cut_canvas')}
-                                    >
-                                        <Hand size={20} className="animate-bounce" />
-                                        <div className="flex flex-col">
-                                            <span className="font-bold text-sm">{t.guide_cut_canvas}</span>
-                                            <span className="text-[10px] opacity-90">{t.guide_cut_canvas_sub}</span>
-                                        </div>
-                                    </div>
-                                </div>
+                            {/* Intelligent Cut Guides */}
+                            {activeGuideStep === 'cut_tool' && (
+                                <GuideOverlay 
+                                    text={t.guide_cut_tool} 
+                                    subtext={t.guide_cut_tool_sub}
+                                    icon={Brush}
+                                    placement="center"
+                                    onClick={() => setActiveGuideStep('cut_canvas')}
+                                />
+                            )}
+                            {activeGuideStep === 'cut_canvas' && (
+                                <GuideOverlay 
+                                    text={t.guide_cut_canvas} 
+                                    subtext={t.guide_cut_canvas_sub}
+                                    icon={Hand}
+                                    passThrough={true}
+                                    placement="center"
+                                    onClick={() => {}} 
+                                />
                             )}
                         </div>
+
+                        {/* Vertically aligned Controls under the Canvas */}
+                        <Controls 
+                            tool={tool}
+                            onToolChange={setTool}
+                            brushSize={brushSize}
+                            onBrushSizeChange={setBrushSize}
+                            onUndo={() => { canvasRef.current?.undo(); updatePreview(); }}
+                            onRedo={() => { canvasRef.current?.redo(); updatePreview(); }}
+                            onClear={handleResetFolds}
+                            themeColor={dynamicThemeColor}
+                            language={language}
+                            activeGuideStep={activeGuideStep}
+                        />
                     </div>
 
-                    {/* Arrow Indicator */}
-                    <div className="text-zinc-300 hidden md:block">
+                    <div className="text-zinc-300 hidden lg:block self-center pt-32">
                         <ArrowRight size={32} />
                     </div>
 
-                    {/* Right: Real-time Preview */}
-                    <div className="relative flex flex-col items-center gap-2">
-                         <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Preview</span>
-                         <div className="bg-white p-2 rounded-xl shadow-lg border border-zinc-100 w-[500px] h-[500px] flex items-center justify-center overflow-hidden bg-zinc-50/50">
+                    {/* Right Column: Preview */}
+                    <div className="flex flex-col gap-6 w-[500px]">
+                         <div className="flex items-center justify-between px-2">
+                             <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Preview</span>
+                         </div>
+                         
+                         <div className="relative bg-white p-2 rounded-xl shadow-lg border border-zinc-100 w-[500px] h-[500px] flex items-center justify-center overflow-hidden bg-zinc-50/50">
                             {previewImage ? (
                                 <img 
                                     src={previewImage} 
@@ -458,48 +579,46 @@ const App = () => {
                                     <span className="text-sm">Generating Preview...</span>
                                 </div>
                             )}
+
+                             {/* Preview Guide Overlay */}
+                            {activeGuideStep === 'cut_preview' && (
+                                <GuideOverlay 
+                                    text={t.guide_cut_preview} 
+                                    subtext={t.guide_cut_preview_sub}
+                                    icon={Eye}
+                                    onClick={() => setActiveGuideStep('cut_save')}
+                                />
+                            )}
+                         </div>
+
+                         {/* Separate Save Result Button */}
+                         <div className="relative">
+                            <button 
+                                onClick={handleSaveResult}
+                                className={`w-full py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-white shadow-lg ${
+                                    dynamicThemeColor ? '' : 'bg-red-600 hover:bg-red-700 shadow-red-500/30'
+                                }`}
+                                style={dynamicThemeColor ? { backgroundColor: dynamicThemeColor } : {}}
+                            >
+                                <Download size={24} />
+                                {t.saveResult}
+                            </button>
+
+                            {isSaveGuide && (
+                                <>
+                                    <div className="absolute inset-0 -m-1 border-4 border-red-500 rounded-xl animate-pulse pointer-events-none"></div>
+                                    <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-40 bg-red-600 text-white text-xs p-2 rounded-lg shadow-xl text-center pointer-events-none z-50">
+                                        <div className="font-bold mb-0.5">{t.guide_cut_save}</div>
+                                        <div className="opacity-90 text-[10px]">{t.guide_cut_save_sub}</div>
+                                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-600 rotate-45"></div>
+                                    </div>
+                                </>
+                            )}
                          </div>
                     </div>
                 </div>
            )}
 
-        </div>
-
-        {/* CONTROLS AREA */}
-        <div className="w-full z-20 pb-10">
-            {phase === 'folding' ? (
-                <FoldingControls 
-                    mode={mode}
-                    onModeChange={handleModeChange}
-                    onFold={handleFold}
-                    canFold={canFold}
-                    onPresetSelect={handlePresetSelect}
-                    selectedPreset={selectedPreset}
-                    onFinish={handleFinishFolding}
-                    onReset={handleResetFolds}
-                    foldCount={foldCount}
-                    maxFolds={MAX_FOLDS}
-                    paperColor={paperColor}
-                    onColorChange={setPaperColor}
-                    themeColor={dynamicThemeColor}
-                    language={language}
-                    activeGuide={activeGuide === 'fold_up'}
-                    onDismissGuide={() => dismissGuide('fold_up')}
-                />
-            ) : (
-                <Controls 
-                    tool={tool}
-                    onToolChange={setTool}
-                    brushSize={brushSize}
-                    onBrushSizeChange={setBrushSize}
-                    onUndo={() => { canvasRef.current?.undo(); updatePreview(); }}
-                    onRedo={() => { canvasRef.current?.redo(); updatePreview(); }}
-                    onClear={handleResetFolds}
-                    onDownload={handleDownload}
-                    themeColor={dynamicThemeColor}
-                    language={language}
-                />
-            )}
         </div>
       </main>
 

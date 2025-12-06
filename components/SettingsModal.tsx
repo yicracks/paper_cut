@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Image as ImageIcon, Settings as SettingsIcon, Palette, MessageSquare, Info, Trash2, Upload, BookOpen, Scissors, Layers, Snowflake, Brush, Square, Download, Eye } from 'lucide-react';
+import { X, Image as ImageIcon, Settings as SettingsIcon, Palette, MessageSquare, Info, Trash2, Upload, BookOpen, Scissors, ArrowUp, ArrowRight, CornerRightDown, Hand, Eye, Download } from 'lucide-react';
 import { AppSettings, GalleryItem, Language } from '../types';
 import { getGalleryItems, deleteGalleryItem } from '../utils/db';
 import { TEXT } from '../utils/i18n';
@@ -13,7 +13,7 @@ interface SettingsModalProps {
   language: Language;
 }
 
-type Tab = 'tutorial' | 'gallery' | 'save' | 'theme' | 'feedback' | 'about';
+type Tab = 'tutorial' | 'gallery' | 'theme' | 'feedback' | 'about';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
   isOpen, 
@@ -81,12 +81,24 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       switch(tab) {
           case 'tutorial': return t.tab_tutorial;
           case 'gallery': return t.mySavedWorks;
-          case 'save': return t.tab_save;
           case 'theme': return t.tab_theme;
           case 'feedback': return t.tab_feedback;
           case 'about': return t.tab_about;
           default: return tab;
       }
+  }
+
+  // Visual Mock Components for Tutorial
+  const MockTooltip = ({ text, subtext, position = 'top' }: { text: string, subtext: string, position?: 'top'|'bottom'|'center' }) => {
+      const posClass = position === 'top' ? '-top-16' : (position === 'bottom' ? '-bottom-16' : 'top-1/2 -translate-y-1/2');
+      return (
+          <div className={`absolute left-1/2 -translate-x-1/2 w-40 bg-red-600 text-white text-xs p-2 rounded-lg shadow-xl text-center z-50 ${posClass}`}>
+              <div className="font-bold mb-0.5">{text}</div>
+              <div className="opacity-90 text-[10px]">{subtext}</div>
+              {position === 'top' && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-600 rotate-45"></div>}
+              {position === 'bottom' && <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-600 rotate-45"></div>}
+          </div>
+      );
   }
 
   return (
@@ -104,7 +116,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           <nav className="flex-1 py-4">
             <TabButton id="tutorial" icon={BookOpen} label={t.tab_tutorial} />
             <TabButton id="gallery" icon={ImageIcon} label={t.tab_gallery} />
-            <TabButton id="save" icon={SettingsIcon} label={t.tab_save} />
             <TabButton id="theme" icon={Palette} label={t.tab_theme} />
             <TabButton id="feedback" icon={MessageSquare} label={t.tab_feedback} />
             <TabButton id="about" icon={Info} label={t.tab_about} />
@@ -129,23 +140,30 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             
             {/* Tutorial Tab */}
             {activeTab === 'tutorial' && (
-              <div className="space-y-6 max-w-2xl mx-auto">
+              <div className="space-y-8 max-w-2xl mx-auto pb-10">
                 
-                {/* Step 1: Fold */}
+                {/* Step 1: Fold Mockup */}
                 <div className="bg-zinc-50 rounded-xl border border-zinc-100 overflow-hidden">
-                  <div className="bg-zinc-100 p-6 flex justify-center items-center gap-8 text-zinc-400">
-                      <div className="flex flex-col items-center gap-2">
-                          <div className="w-12 h-12 bg-white rounded-lg shadow-sm flex items-center justify-center text-red-600">
-                              <Layers size={24} />
+                  <div className="bg-zinc-100 p-8 flex justify-center items-center">
+                      {/* Mock Grid */}
+                      <div className="grid grid-cols-3 gap-2 w-40">
+                          <div className="bg-white rounded h-10 border border-zinc-200"></div>
+                          <div className="bg-white rounded h-10 border border-red-400 relative shadow-sm">
+                              <div className="absolute inset-0 flex items-center justify-center text-red-600"><ArrowUp size={20} /></div>
+                              <div className="absolute inset-0 -m-1 border-2 border-red-500 rounded animate-pulse"></div>
+                              <MockTooltip text={t.guide_fold_up} subtext={t.guide_fold_up_sub} position="top" />
                           </div>
-                          <span className="text-xs font-bold">{t.freeFold}</span>
-                      </div>
-                      <div className="h-px w-8 bg-zinc-300"></div>
-                      <div className="flex flex-col items-center gap-2">
-                          <div className="w-12 h-12 bg-white rounded-lg shadow-sm flex items-center justify-center text-red-600">
-                              <Snowflake size={24} />
+                          <div className="bg-white rounded h-10 border border-zinc-200"></div>
+                          <div className="bg-white rounded h-10 border border-zinc-200"></div>
+                          <div className="bg-red-500 rounded-full w-8 h-8 mx-auto mt-1"></div>
+                          <div className="bg-white rounded h-10 border border-zinc-200 relative">
+                               <div className="absolute inset-0 flex items-center justify-center text-zinc-300"><ArrowRight size={20} /></div>
                           </div>
-                          <span className="text-xs font-bold">{t.presetPatterns}</span>
+                          <div className="bg-white rounded h-10 border border-zinc-200"></div>
+                          <div className="bg-white rounded h-10 border border-zinc-200"></div>
+                          <div className="bg-white rounded h-10 border border-zinc-200 relative">
+                                <div className="absolute inset-0 flex items-center justify-center text-zinc-300"><CornerRightDown size={20} /></div>
+                          </div>
                       </div>
                   </div>
                   <div className="p-4">
@@ -154,15 +172,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   </div>
                 </div>
 
-                {/* Step 2: Cut */}
+                {/* Step 2: Cut Mockup */}
                 <div className="bg-zinc-50 rounded-xl border border-zinc-100 overflow-hidden">
-                   <div className="bg-zinc-100 p-6 flex justify-center items-center gap-4">
-                      <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg z-10">
-                          <Scissors size={18} className="-rotate-45" />
-                      </div>
-                      <div className="flex gap-2">
-                          <div className="w-8 h-8 bg-white rounded border border-zinc-200 flex items-center justify-center text-zinc-400"><Brush size={16} /></div>
-                          <div className="w-8 h-8 bg-white rounded border border-zinc-200 flex items-center justify-center text-zinc-400"><Square size={16} /></div>
+                   <div className="bg-zinc-100 p-8 flex justify-center items-center">
+                      <div className="w-48 h-48 bg-white border border-zinc-200 rounded-lg relative flex items-center justify-center shadow-sm">
+                           {/* Canvas Area */}
+                           <div className="w-32 h-32 bg-red-600 rounded-sm opacity-20"></div>
+                           {/* Mock Hint Overlay */}
+                           <div className="absolute inset-0 flex items-center justify-center">
+                               <div className="bg-red-600 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-bounce">
+                                   <Hand size={16} />
+                                   <span className="text-xs font-bold">{t.guide_cut_canvas}</span>
+                               </div>
+                           </div>
                       </div>
                    </div>
                    <div className="p-4">
@@ -171,15 +193,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                    </div>
                 </div>
 
-                {/* Step 3: Show */}
+                {/* Step 3: Result Mockup */}
                 <div className="bg-zinc-50 rounded-xl border border-zinc-100 overflow-hidden">
-                   <div className="bg-zinc-100 p-6 flex justify-center items-center gap-8">
-                       <div className="relative group cursor-default">
-                           <div className="w-20 h-20 bg-white shadow-md rounded-lg flex items-center justify-center">
-                               <span className="text-red-500/20 text-4xl font-serif">✿</span>
-                           </div>
-                           <div className="absolute -bottom-3 -right-3 w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white shadow-lg">
-                               <Download size={18} />
+                   <div className="bg-zinc-100 p-8 flex justify-center items-center gap-4">
+                       <div className="w-56 bg-white p-2 rounded-lg shadow-sm border border-zinc-200">
+                           <div className="bg-zinc-50 h-32 rounded flex items-center justify-center text-red-200 mb-2">✿</div>
+                           <div className="relative">
+                               <div className="w-full h-8 bg-red-600 rounded flex items-center justify-center text-white text-xs gap-2">
+                                   <Download size={14} /> {t.saveResult}
+                               </div>
+                               <MockTooltip text={t.guide_cut_save} subtext={t.guide_cut_save_sub} position="bottom" />
                            </div>
                        </div>
                    </div>
@@ -227,27 +250,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     ))}
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Save Settings Tab */}
-            {activeTab === 'save' && (
-              <div className="max-w-md">
-                <label className="flex items-center justify-between p-4 rounded-xl border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors">
-                  <div className="space-y-1">
-                    <div className="font-medium text-zinc-900">{t.saveCutPattern}</div>
-                    <div className="text-sm text-zinc-500">{t.saveCutPatternDesc}</div>
-                  </div>
-                  <div className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                        type="checkbox" 
-                        className="sr-only peer"
-                        checked={settings.saveCutPattern}
-                        onChange={(e) => onUpdateSettings({ saveCutPattern: e.target.checked })}
-                    />
-                    <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
-                  </div>
-                </label>
               </div>
             )}
 

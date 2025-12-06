@@ -14,6 +14,8 @@ export const TEXT = {
     thickness: "Line Thickness",
     startOver: "Start Over",
     download: "Download",
+    savePattern: "Save Pattern",
+    saveResult: "Save Result",
     
     // Folding
     freeFold: "Free Fold",
@@ -34,17 +36,30 @@ export const TEXT = {
     hint_fold: "Choose a direction to fold the paper.",
     hint_cut: "Now you can start drawing/cutting.",
     
-    // Interactive Guides
-    guide_fold_up: "Try folding Up",
-    guide_fold_up_sub: "Click to start folding",
-    guide_cut_canvas: "Start Drawing Here",
-    guide_cut_canvas_sub: "Draw lines or shapes to cut",
+    // Interactive Guides - FOLD
+    guide_fold_up: "1. Fold Up",
+    guide_fold_up_sub: "Click to fold upwards",
+    guide_fold_right: "2. Fold Right",
+    guide_fold_right_sub: "Next, fold to the right",
+    guide_fold_br: "3. Fold Corner",
+    guide_fold_br_sub: "Fold the Bottom-Right corner",
+    guide_fold_finish: "4. Start Cutting",
+    guide_fold_finish_sub: "Click here to enter Cut Mode",
+
+    // Interactive Guides - CUT
+    guide_cut_tool: "Brush Tool",
+    guide_cut_tool_sub: "Currently using Freehand Brush",
+    guide_cut_canvas: "Draw Here",
+    guide_cut_canvas_sub: "Draw lines to cut the paper",
+    guide_cut_preview: "Real-time Result",
+    guide_cut_preview_sub: "See the unfolded pattern here",
+    guide_cut_save: "Save Work",
+    guide_cut_save_sub: "Download your masterpiece",
 
     // Settings Sidebar
     settingsTitle: "Settings",
     tab_tutorial: "Tutorial",
     tab_gallery: "My Saves",
-    tab_save: "Save Options",
     tab_theme: "Appearance",
     tab_feedback: "Feedback",
     tab_about: "About Us",
@@ -53,9 +68,6 @@ export const TEXT = {
     mySavedWorks: "My Saved Works",
     noSaves: "No saved works yet. Create and download something!",
     deleteConfirm: "Delete this saved work?",
-    
-    saveCutPattern: "Save Cut Pattern",
-    saveCutPatternDesc: "Also save the small thumbnail (cut guide) when downloading",
     
     dynamicTheme: "Dynamic Icon Colors",
     dynamicThemeDesc: "Change interface buttons to match your selected paper color",
@@ -75,12 +87,12 @@ export const TEXT = {
 
     // Tutorial Content
     tutorial_title: "How to Create",
-    t_step1_title: "1. Fold The Paper",
-    t_step1_desc: "Choose between 'Free Fold' to customize folds step-by-step, or 'Preset Patterns' for radial symmetry (like snowflakes).",
-    t_step2_title: "2. Cut The Pattern",
-    t_step2_desc: "Use the 'Brush' to draw freehand lines, or select 'Shapes' (Circles, Triangles) to punch holes. Adjust thickness with the slider.",
-    t_step3_title: "3. Reveal & Save",
-    t_step3_desc: "Click 'Show Result' to unfold your creation. You can save both the final image and the cutting pattern."
+    t_step1_title: "1. Folding Sequence",
+    t_step1_desc: "Follow the interactive guides to fold the paper. Start by folding UP, then RIGHT, then the Corner.",
+    t_step2_title: "2. Drawing & Cutting",
+    t_step2_desc: "Draw on the colored area. The app highlights the center where you should draw.",
+    t_step3_title: "3. Preview & Save",
+    t_step3_desc: "Watch the real-time preview on the right. Click 'Save Result' to download and add to your gallery."
   },
   zh: {
     appTitle: "数字剪纸艺术",
@@ -94,6 +106,8 @@ export const TEXT = {
     thickness: "线条粗细",
     startOver: "重新开始",
     download: "下载保存",
+    savePattern: "保存切割图",
+    saveResult: "保存展开图",
     
     // Folding
     freeFold: "自由折叠",
@@ -114,17 +128,30 @@ export const TEXT = {
     hint_fold: "可以选择方向进行折叠",
     hint_cut: "现在可以开始作图了",
     
-    // Interactive Guides
-    guide_fold_up: "试试向上折叠",
-    guide_fold_up_sub: "点击此处开始",
-    guide_cut_canvas: "在此处作图",
-    guide_cut_canvas_sub: "画出线条或形状来剪纸",
+    // Interactive Guides - FOLD
+    guide_fold_up: "1. 向上折叠",
+    guide_fold_up_sub: "点击此处向上对折",
+    guide_fold_right: "2. 向右折叠",
+    guide_fold_right_sub: "点击此处向右对折",
+    guide_fold_br: "3. 折叠右下角",
+    guide_fold_br_sub: "增加一个对角线折叠",
+    guide_fold_finish: "4. 开始剪纸",
+    guide_fold_finish_sub: "折叠完成，进入剪裁阶段",
+
+    // Interactive Guides - CUT
+    guide_cut_tool: "自由画笔",
+    guide_cut_tool_sub: "默认使用画笔，可自由绘制",
+    guide_cut_canvas: "在此作图",
+    guide_cut_canvas_sub: "在折叠区域绘制图案进行剪裁",
+    guide_cut_preview: "实时效果",
+    guide_cut_preview_sub: "此处实时显示展开后的样子",
+    guide_cut_save: "保存作品",
+    guide_cut_save_sub: "点击此处保存你的作品",
     
     // Settings Sidebar
     settingsTitle: "设置",
     tab_tutorial: "使用教程",
     tab_gallery: "我的作品",
-    tab_save: "保存设置",
     tab_theme: "外观设置",
     tab_feedback: "意见反馈",
     tab_about: "关于我们",
@@ -133,9 +160,6 @@ export const TEXT = {
     mySavedWorks: "我的作品库",
     noSaves: "暂无保存的作品。快去创作并下载吧！",
     deleteConfirm: "确定要删除这个作品吗？",
-    
-    saveCutPattern: "保存切割示意图",
-    saveCutPatternDesc: "下载成品时，同时保存左下角的切割线条图",
     
     dynamicTheme: "动态图标颜色",
     dynamicThemeDesc: "界面按钮颜色跟随当前纸张颜色变化",
@@ -155,11 +179,11 @@ export const TEXT = {
 
     // Tutorial Content
     tutorial_title: "创作指南",
-    t_step1_title: "1. 折叠纸张",
-    t_step1_desc: "选择'自由折叠'自定义折叠顺序，或选择'预设图案'制作放射状对称图形（如雪花、五角星）。",
-    t_step2_title: "2. 剪裁图案",
-    t_step2_desc: "使用'画笔'自由绘制线条，或使用'形状工具'（圆形、方形等）进行镂空。可通过滑块调整线条粗细。",
-    t_step3_title: "3. 展示与保存",
-    t_step3_desc: "点击'展示'查看展开后的惊艳效果。您可以下载成品图，并选择是否保存切割示意图。"
+    t_step1_title: "1. 折叠步骤",
+    t_step1_desc: "跟随界面上的红色提示进行折叠。依次点击：向上折叠 -> 向右折叠 -> 右下角折叠。",
+    t_step2_title: "2. 绘制与剪裁",
+    t_step2_desc: "在中间的红色区域绘制图案。这里是折叠后的纸张，您的每一笔都会被剪切掉。",
+    t_step3_title: "3. 预览与保存",
+    t_step3_desc: "右侧实时显示展开后的完整图案。点击'保存展开图'即可下载并保存到作品库。"
   }
 };

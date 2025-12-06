@@ -45,13 +45,12 @@ export interface GalleryItem {
   id: string;
   timestamp: number;
   resultImage: string;
-  cutImage?: string; // Optional based on settings
+  cutImage?: string; // Always saved now
   name: string;
   foldMode: string;
 }
 
 export interface AppSettings {
-  saveCutPattern: boolean;
   dynamicTheme: boolean;
 }
 
