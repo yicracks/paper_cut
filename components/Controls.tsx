@@ -4,7 +4,8 @@ import {
     Scissors, RotateCcw, Eye, Download, Undo2, Redo2,
     Minus, Square, Circle, Triangle, Brush, Star
 } from 'lucide-react';
-import { DrawingTool } from '../types';
+import { DrawingTool, Language } from '../types';
+import { TEXT } from '../utils/i18n';
 
 interface ControlsProps {
   tool: DrawingTool;
@@ -17,7 +18,8 @@ interface ControlsProps {
   onShow: () => void;
   isShowingResult: boolean;
   onDownload?: () => void;
-  themeColor?: string; // New prop for dynamic theme
+  themeColor?: string;
+  language: Language;
 }
 
 const Controls: React.FC<ControlsProps> = ({
@@ -31,8 +33,10 @@ const Controls: React.FC<ControlsProps> = ({
   onShow,
   isShowingResult,
   onDownload,
-  themeColor
+  themeColor,
+  language
 }) => {
+  const t = TEXT[language];
   
   const ToolButton = ({ t, icon: Icon, customIcon }: { t: DrawingTool, icon?: any, customIcon?: React.ReactNode }) => {
       const isSelected = tool === t;
@@ -65,7 +69,7 @@ const Controls: React.FC<ControlsProps> = ({
                 {/* Visual Title */}
                 <div className="flex items-center gap-2 text-zinc-400 font-bold uppercase text-xs tracking-wider">
                     <Scissors size={14} />
-                    <span>Tools</span>
+                    <span>{t.tools}</span>
                 </div>
 
                 {/* History Actions */}
@@ -73,14 +77,14 @@ const Controls: React.FC<ControlsProps> = ({
                     <button
                         onClick={onUndo}
                         className="w-10 h-10 flex items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 hover:bg-zinc-200 transition-all"
-                        title="Undo"
+                        title={t.undo}
                     >
                         <Undo2 size={20} />
                     </button>
                     <button
                         onClick={onRedo}
                         className="w-10 h-10 flex items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 hover:bg-zinc-200 transition-all"
-                        title="Redo"
+                        title={t.redo}
                     >
                         <Redo2 size={20} />
                     </button>
@@ -112,7 +116,7 @@ const Controls: React.FC<ControlsProps> = ({
                         onChange={(e) => onBrushSizeChange?.(parseInt(e.target.value))}
                         className="flex-1 h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-red-600 hover:accent-red-500"
                         style={{ accentColor: themeColor }}
-                        title="Line Thickness"
+                        title={t.thickness}
                     />
                     <div className="w-3 h-3 rounded-full bg-zinc-300"></div>
                 </div>
@@ -153,7 +157,7 @@ const Controls: React.FC<ControlsProps> = ({
             onClick={onShow}
             style={primaryButtonStyle}
             className={`flex-1 ${!themeColor && 'bg-gradient-to-r from-red-600 to-red-500'} text-white hover:shadow-red-500/30 hover:scale-[1.02] py-4 rounded-xl text-lg font-bold tracking-wide transition-all flex items-center justify-center gap-2 shadow-lg`}
-            title="Show Result"
+            title={t.showResult}
           >
             <Eye size={24} />
           </button>
@@ -162,7 +166,7 @@ const Controls: React.FC<ControlsProps> = ({
             <button
               onClick={onClear}
               className="w-20 rounded-xl bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-red-600 transition-all flex items-center justify-center"
-              title="Start Over"
+              title={t.startOver}
             >
               <RotateCcw size={24} />
             </button>
@@ -172,7 +176,7 @@ const Controls: React.FC<ControlsProps> = ({
                 onClick={onDownload}
                 style={primaryButtonStyle}
                 className={`flex-1 ${!themeColor && 'bg-red-600'} text-white hover:bg-red-700 shadow-lg shadow-red-500/30 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2`}
-                title="Download"
+                title={t.download}
               >
                 <Download size={24} />
               </button>

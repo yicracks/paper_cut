@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, CornerLeftUp, CornerRightUp, CornerLeftDown, CornerRightDown, RotateCcw, Scissors, Pentagon, Square, Hexagon, Triangle, Layers, Snowflake } from 'lucide-react';
-import { FoldDirection, FoldingMode } from '../types';
+import { FoldDirection, FoldingMode, Language } from '../types';
+import { TEXT } from '../utils/i18n';
 
 interface FoldingControlsProps {
   mode: FoldingMode;
@@ -16,7 +17,8 @@ interface FoldingControlsProps {
   maxFolds: number;
   paperColor: string;
   onColorChange: (color: string) => void;
-  themeColor?: string; // New prop for dynamic theme
+  themeColor?: string;
+  language: Language;
 }
 
 const FoldingControls: React.FC<FoldingControlsProps> = ({ 
@@ -32,11 +34,15 @@ const FoldingControls: React.FC<FoldingControlsProps> = ({
   maxFolds,
   paperColor,
   onColorChange,
-  themeColor
+  themeColor,
+  language
 }) => {
-  
-  const Button = ({ dir, icon: Icon, label }: { dir: FoldDirection, icon: any, label: string }) => {
+  const t = TEXT[language];
+
+  const Button = ({ dir, icon: Icon, labelKey }: { dir: FoldDirection, icon: any, labelKey: string }) => {
     const disabled = !canFold(dir);
+    // @ts-ignore
+    const label = t[labelKey] || labelKey;
     return (
       <button
         onClick={() => onFold(dir)}
@@ -46,7 +52,7 @@ const FoldingControls: React.FC<FoldingControlsProps> = ({
             ? 'bg-zinc-50 text-zinc-200 cursor-not-allowed' 
             : 'bg-white shadow-sm hover:shadow-md hover:bg-red-50 text-zinc-600 hover:text-red-600 border border-zinc-100'
         }`}
-        title={`Fold ${label}`}
+        title={`${label}`}
       >
         <Icon size={24} strokeWidth={2} />
       </button>
@@ -94,7 +100,7 @@ const FoldingControls: React.FC<FoldingControlsProps> = ({
             ? 'bg-white shadow-sm' 
             : 'text-zinc-400 hover:text-zinc-600'
           }`}
-          title="Free Fold"
+          title={t.freeFold}
         >
           <Layers size={20} />
         </button>
@@ -106,7 +112,7 @@ const FoldingControls: React.FC<FoldingControlsProps> = ({
             ? 'bg-white shadow-sm' 
             : 'text-zinc-400 hover:text-zinc-600'
           }`}
-          title="Preset Patterns"
+          title={t.presetPatterns}
         >
           <Snowflake size={20} />
         </button>
@@ -115,12 +121,12 @@ const FoldingControls: React.FC<FoldingControlsProps> = ({
       {mode === 'custom' ? (
         <div className="grid grid-cols-3 gap-3 mb-6">
             {/* Top Row */}
-            <Button dir="TL" icon={CornerLeftUp} label="Top-Left" />
-            <Button dir="UP" icon={ArrowUp} label="Up" />
-            <Button dir="TR" icon={CornerRightUp} label="Top-Right" />
+            <Button dir="TL" icon={CornerLeftUp} labelKey="fold_TL" />
+            <Button dir="UP" icon={ArrowUp} labelKey="fold_UP" />
+            <Button dir="TR" icon={CornerRightUp} labelKey="fold_TR" />
 
             {/* Middle Row */}
-            <Button dir="LEFT" icon={ArrowLeft} label="Left" />
+            <Button dir="LEFT" icon={ArrowLeft} labelKey="fold_LEFT" />
             <div className="flex items-center justify-center relative">
                 {/* Color Picker Button */}
                 <div className="relative w-8 h-8 rounded-full overflow-hidden shadow-sm border border-zinc-200 ring-2 ring-white">
@@ -129,7 +135,7 @@ const FoldingControls: React.FC<FoldingControlsProps> = ({
                         value={paperColor}
                         onChange={(e) => onColorChange(e.target.value)}
                         className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10 scale-150"
-                        title="Change Paper Color"
+                        title={t.changeColor}
                     />
                     <div 
                         className="w-full h-full"
@@ -137,12 +143,12 @@ const FoldingControls: React.FC<FoldingControlsProps> = ({
                     ></div>
                 </div>
             </div>
-            <Button dir="RIGHT" icon={ArrowRight} label="Right" />
+            <Button dir="RIGHT" icon={ArrowRight} labelKey="fold_RIGHT" />
 
             {/* Bottom Row */}
-            <Button dir="BL" icon={CornerLeftDown} label="Bottom-Left" />
-            <Button dir="DOWN" icon={ArrowDown} label="Down" />
-            <Button dir="BR" icon={CornerRightDown} label="Bottom-Right" />
+            <Button dir="BL" icon={CornerLeftDown} labelKey="fold_BL" />
+            <Button dir="DOWN" icon={ArrowDown} labelKey="fold_DOWN" />
+            <Button dir="BR" icon={CornerRightDown} labelKey="fold_BR" />
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 mb-6">
@@ -158,7 +164,7 @@ const FoldingControls: React.FC<FoldingControlsProps> = ({
             <button
                 onClick={onReset}
                 className="w-14 flex items-center justify-center rounded-xl bg-zinc-100 text-zinc-500 font-bold hover:bg-zinc-200 transition-colors"
-                title="Reset Paper"
+                title={t.resetPaper}
             >
                 <RotateCcw size={22} />
             </button>
@@ -173,7 +179,7 @@ const FoldingControls: React.FC<FoldingControlsProps> = ({
                 ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed shadow-none'
                 : (themeColor ? 'text-white shadow-md' : 'bg-red-600 text-white hover:bg-red-700 shadow-red-200')
             }`}
-            title="Start Cutting"
+            title={t.startCutting}
         >
             <Scissors size={24} className="-rotate-45" />
         </button>

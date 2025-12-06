@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Scissors, Settings } from 'lucide-react';
+import { Scissors, Settings, Languages } from 'lucide-react';
 import JianzhiCanvas, { JianzhiCanvasHandle } from './components/JianzhiCanvas';
 import Controls from './components/Controls';
 import FoldingControls from './components/FoldingControls';
@@ -8,12 +8,16 @@ import SettingsModal from './components/SettingsModal';
 import FoldAnimator from './components/FoldAnimator';
 import { PaperSimulation } from './utils/simulationUtils';
 import { PresetSimulation } from './utils/presetSimulation';
-import { DrawingTool, FoldDirection, FoldingMode, SimulationEngine, AppSettings } from './types';
+import { DrawingTool, FoldDirection, FoldingMode, SimulationEngine, AppSettings, Language } from './types';
 import { saveToGallery } from './utils/db';
+import { TEXT } from './utils/i18n';
 
 const App = () => {
   const [phase, setPhase] = useState<'folding' | 'cutting' | 'result'>('folding');
   
+  // Language State
+  const [language, setLanguage] = useState<Language>('en');
+
   // Cutting Tools State
   const [tool, setTool] = useState<DrawingTool>('brush');
   const [brushSize, setBrushSize] = useState(15);
@@ -57,6 +61,8 @@ const App = () => {
   const VISUAL_SIZE = 500; 
   
   const canvasRef = useRef<JianzhiCanvasHandle>(null);
+
+  const t = TEXT[language];
 
   useEffect(() => {
     if (phase === 'folding' && foldCanvasRef.current && simulationRef.current && !isAnimating) {
@@ -255,12 +261,16 @@ const App = () => {
 
   const dynamicThemeColor = appSettings.dynamicTheme ? paperColor : undefined;
 
+  const toggleLanguage = () => {
+    setLanguage(prev => prev === 'en' ? 'zh' : 'en');
+  };
+
   return (
     <div className="min-h-screen bg-grid-pattern text-zinc-800 pb-20">
       <header className="bg-white border-b border-zinc-200 pt-4 pb-2 px-6 sticky top-0 z-40 shadow-sm">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
             {/* Left Spacer for centering */}
-            <div className="w-10"></div>
+            <div className="w-20"></div>
 
             {/* Center Content */}
             <div className="flex flex-col items-center gap-4">
@@ -272,22 +282,30 @@ const App = () => {
                         <Scissors size={18} strokeWidth={2.5} style={{ transform: 'rotate(-45deg)' }} />
                     </div>
                     <h1 className="text-xl font-bold tracking-tight text-zinc-900">
-                        Paper Cut Art
+                        {t.appTitle}
                     </h1>
                 </div>
                 
                 <div className="flex gap-8">
-                    <StepIndicator step="folding" label="fold" isActive={phase === 'folding'} />
-                    <StepIndicator step="cutting" label="cut" isActive={phase === 'cutting'} />
-                    <StepIndicator step="result" label="show" isActive={phase === 'result'} />
+                    <StepIndicator step="folding" label={t.step_fold} isActive={phase === 'folding'} />
+                    <StepIndicator step="cutting" label={t.step_cut} isActive={phase === 'cutting'} />
+                    <StepIndicator step="result" label={t.step_show} isActive={phase === 'result'} />
                 </div>
             </div>
 
-            {/* Right Settings Button */}
-            <div className="w-10 flex justify-end">
+            {/* Right Buttons */}
+            <div className="w-20 flex justify-end gap-2">
+                <button 
+                    onClick={toggleLanguage}
+                    className="p-2 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-full transition-colors"
+                    title={language === 'en' ? "Switch to Chinese" : "Switch to English"}
+                >
+                    <Languages size={24} />
+                </button>
                 <button 
                     onClick={() => setIsSettingsOpen(true)}
                     className="p-2 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-full transition-colors"
+                    title={t.settingsTitle}
                 >
                     <Settings size={24} />
                 </button>
@@ -399,6 +417,7 @@ const App = () => {
                     paperColor={paperColor}
                     onColorChange={setPaperColor}
                     themeColor={dynamicThemeColor}
+                    language={language}
                 />
             ) : (
                 <Controls 
@@ -413,6 +432,7 @@ const App = () => {
                     isShowingResult={phase === 'result'}
                     onDownload={handleDownload}
                     themeColor={dynamicThemeColor}
+                    language={language}
                 />
             )}
         </div>
@@ -423,6 +443,7 @@ const App = () => {
         onClose={() => setIsSettingsOpen(false)}
         settings={appSettings}
         onUpdateSettings={(newSettings) => setAppSettings(prev => ({ ...prev, ...newSettings }))}
+        language={language}
       />
     </div>
   );

@@ -54,3 +54,5 @@ export interface AppSettings {
   saveCutPattern: boolean;
   dynamicTheme: boolean;
 }
+
+export type Language = 'en' | 'zh';

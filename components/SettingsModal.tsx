@@ -1,25 +1,29 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Image as ImageIcon, Settings as SettingsIcon, Palette, MessageSquare, Info, Trash2, Upload } from 'lucide-react';
-import { AppSettings, GalleryItem } from '../types';
+import { X, Image as ImageIcon, Settings as SettingsIcon, Palette, MessageSquare, Info, Trash2, Upload, BookOpen, Scissors, Layers, Snowflake, Brush, Square, Download, Eye } from 'lucide-react';
+import { AppSettings, GalleryItem, Language } from '../types';
 import { getGalleryItems, deleteGalleryItem } from '../utils/db';
+import { TEXT } from '../utils/i18n';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   settings: AppSettings;
   onUpdateSettings: (newSettings: Partial<AppSettings>) => void;
+  language: Language;
 }
 
-type Tab = 'gallery' | 'save' | 'theme' | 'feedback' | 'about';
+type Tab = 'tutorial' | 'gallery' | 'save' | 'theme' | 'feedback' | 'about';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
   isOpen, 
   onClose, 
   settings, 
-  onUpdateSettings 
+  onUpdateSettings,
+  language
 }) => {
-  const [activeTab, setActiveTab] = useState<Tab>('gallery');
+  const t = TEXT[language];
+  const [activeTab, setActiveTab] = useState<Tab>('tutorial');
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   
   // Feedback state
@@ -39,7 +43,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Delete this saved work?')) {
+    if (confirm(t.deleteConfirm)) {
       await deleteGalleryItem(id);
       loadGallery();
     }
@@ -73,6 +77,18 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     </button>
   );
 
+  const getTabTitle = (tab: Tab) => {
+      switch(tab) {
+          case 'tutorial': return t.tab_tutorial;
+          case 'gallery': return t.mySavedWorks;
+          case 'save': return t.tab_save;
+          case 'theme': return t.tab_theme;
+          case 'feedback': return t.tab_feedback;
+          case 'about': return t.tab_about;
+          default: return tab;
+      }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div className="bg-white w-full max-w-4xl h-[600px] rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in-95 duration-200">
@@ -82,15 +98,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="p-6 border-b border-zinc-200">
             <h2 className="text-xl font-bold text-zinc-800 flex items-center gap-2">
               <SettingsIcon className="text-red-600" />
-              Settings
+              {t.settingsTitle}
             </h2>
           </div>
           <nav className="flex-1 py-4">
-            <TabButton id="gallery" icon={ImageIcon} label="My Saves" />
-            <TabButton id="save" icon={SettingsIcon} label="Save Options" />
-            <TabButton id="theme" icon={Palette} label="Appearance" />
-            <TabButton id="feedback" icon={MessageSquare} label="Feedback" />
-            <TabButton id="about" icon={Info} label="About Us" />
+            <TabButton id="tutorial" icon={BookOpen} label={t.tab_tutorial} />
+            <TabButton id="gallery" icon={ImageIcon} label={t.tab_gallery} />
+            <TabButton id="save" icon={SettingsIcon} label={t.tab_save} />
+            <TabButton id="theme" icon={Palette} label={t.tab_theme} />
+            <TabButton id="feedback" icon={MessageSquare} label={t.tab_feedback} />
+            <TabButton id="about" icon={Info} label={t.tab_about} />
           </nav>
         </div>
 
@@ -98,7 +115,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="flex-1 flex flex-col min-w-0">
           <div className="flex items-center justify-between p-4 border-b border-zinc-100">
             <h3 className="text-lg font-bold text-zinc-800 capitalize">
-                {activeTab === 'gallery' ? 'My Saved Works' : activeTab}
+                {getTabTitle(activeTab)}
             </h3>
             <button 
               onClick={onClose}
@@ -110,20 +127,88 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
           <div className="flex-1 overflow-y-auto p-6 bg-white">
             
+            {/* Tutorial Tab */}
+            {activeTab === 'tutorial' && (
+              <div className="space-y-6 max-w-2xl mx-auto">
+                
+                {/* Step 1: Fold */}
+                <div className="bg-zinc-50 rounded-xl border border-zinc-100 overflow-hidden">
+                  <div className="bg-zinc-100 p-6 flex justify-center items-center gap-8 text-zinc-400">
+                      <div className="flex flex-col items-center gap-2">
+                          <div className="w-12 h-12 bg-white rounded-lg shadow-sm flex items-center justify-center text-red-600">
+                              <Layers size={24} />
+                          </div>
+                          <span className="text-xs font-bold">{t.freeFold}</span>
+                      </div>
+                      <div className="h-px w-8 bg-zinc-300"></div>
+                      <div className="flex flex-col items-center gap-2">
+                          <div className="w-12 h-12 bg-white rounded-lg shadow-sm flex items-center justify-center text-red-600">
+                              <Snowflake size={24} />
+                          </div>
+                          <span className="text-xs font-bold">{t.presetPatterns}</span>
+                      </div>
+                  </div>
+                  <div className="p-4">
+                    <h4 className="font-bold text-zinc-900 mb-1">{t.t_step1_title}</h4>
+                    <p className="text-sm text-zinc-500 leading-relaxed">{t.t_step1_desc}</p>
+                  </div>
+                </div>
+
+                {/* Step 2: Cut */}
+                <div className="bg-zinc-50 rounded-xl border border-zinc-100 overflow-hidden">
+                   <div className="bg-zinc-100 p-6 flex justify-center items-center gap-4">
+                      <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg z-10">
+                          <Scissors size={18} className="-rotate-45" />
+                      </div>
+                      <div className="flex gap-2">
+                          <div className="w-8 h-8 bg-white rounded border border-zinc-200 flex items-center justify-center text-zinc-400"><Brush size={16} /></div>
+                          <div className="w-8 h-8 bg-white rounded border border-zinc-200 flex items-center justify-center text-zinc-400"><Square size={16} /></div>
+                      </div>
+                   </div>
+                   <div className="p-4">
+                      <h4 className="font-bold text-zinc-900 mb-1">{t.t_step2_title}</h4>
+                      <p className="text-sm text-zinc-500 leading-relaxed">{t.t_step2_desc}</p>
+                   </div>
+                </div>
+
+                {/* Step 3: Show */}
+                <div className="bg-zinc-50 rounded-xl border border-zinc-100 overflow-hidden">
+                   <div className="bg-zinc-100 p-6 flex justify-center items-center gap-8">
+                       <div className="relative group cursor-default">
+                           <div className="w-20 h-20 bg-white shadow-md rounded-lg flex items-center justify-center">
+                               <span className="text-red-500/20 text-4xl font-serif">✿</span>
+                           </div>
+                           <div className="absolute -bottom-3 -right-3 w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white shadow-lg">
+                               <Download size={18} />
+                           </div>
+                       </div>
+                   </div>
+                   <div className="p-4">
+                      <h4 className="font-bold text-zinc-900 mb-1">{t.t_step3_title}</h4>
+                      <p className="text-sm text-zinc-500 leading-relaxed">{t.t_step3_desc}</p>
+                   </div>
+                </div>
+
+              </div>
+            )}
+
             {/* Gallery Tab */}
             {activeTab === 'gallery' && (
               <div className="space-y-6">
                 {galleryItems.length === 0 ? (
                   <div className="text-center py-20 text-zinc-400">
                     <ImageIcon size={48} className="mx-auto mb-4 opacity-50" />
-                    <p>No saved works yet. Create and download something!</p>
+                    <p>{t.noSaves}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                     {galleryItems.map(item => (
                       <div key={item.id} className="group relative bg-zinc-50 rounded-lg overflow-hidden border border-zinc-100 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="aspect-square p-2">
-                            <img src={item.resultImage} alt={item.name} className="w-full h-full object-contain" />
+                        <div className="aspect-square p-2 flex gap-1">
+                            <img src={item.resultImage} alt={item.name} className="flex-1 h-full object-contain" />
+                            {item.cutImage && (
+                                <img src={item.cutImage} alt="Cut pattern" className="w-1/3 h-full object-contain border-l border-zinc-100" />
+                            )}
                         </div>
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                             <button 
@@ -134,8 +219,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                 <Trash2 size={20} />
                             </button>
                         </div>
-                        <div className="p-2 text-xs text-zinc-500 bg-white border-t border-zinc-100 truncate">
-                            {new Date(item.timestamp).toLocaleDateString()}
+                        <div className="p-2 text-xs text-zinc-500 bg-white border-t border-zinc-100 truncate flex justify-between">
+                            <span>{new Date(item.timestamp).toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US')}</span>
+                            <span className="opacity-70">{item.foldMode}</span>
                         </div>
                       </div>
                     ))}
@@ -149,8 +235,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className="max-w-md">
                 <label className="flex items-center justify-between p-4 rounded-xl border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors">
                   <div className="space-y-1">
-                    <div className="font-medium text-zinc-900">Save Cut Pattern</div>
-                    <div className="text-sm text-zinc-500">Also save the small thumbnail (cut guide) when downloading</div>
+                    <div className="font-medium text-zinc-900">{t.saveCutPattern}</div>
+                    <div className="text-sm text-zinc-500">{t.saveCutPatternDesc}</div>
                   </div>
                   <div className="relative inline-flex items-center cursor-pointer">
                     <input 
@@ -170,8 +256,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className="max-w-md">
                 <label className="flex items-center justify-between p-4 rounded-xl border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors">
                   <div className="space-y-1">
-                    <div className="font-medium text-zinc-900">Dynamic Icon Colors</div>
-                    <div className="text-sm text-zinc-500">Change interface buttons to match your selected paper color</div>
+                    <div className="font-medium text-zinc-900">{t.dynamicTheme}</div>
+                    <div className="text-sm text-zinc-500">{t.dynamicThemeDesc}</div>
                   </div>
                   <div className="relative inline-flex items-center cursor-pointer">
                     <input 
@@ -190,18 +276,18 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             {activeTab === 'feedback' && (
               <form onSubmit={handleFeedbackSubmit} className="max-w-md space-y-4">
                 <div className="space-y-2">
-                    <label className="block text-sm font-medium text-zinc-700">Your Suggestion</label>
+                    <label className="block text-sm font-medium text-zinc-700">{t.yourSuggestion}</label>
                     <textarea 
                         required
                         className="w-full h-32 p-3 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none resize-none"
-                        placeholder="Tell us what you think..."
+                        placeholder={t.placeholderFeedback}
                         value={feedbackText}
                         onChange={(e) => setFeedbackText(e.target.value)}
                     ></textarea>
                 </div>
                 
                 <div className="space-y-2">
-                    <label className="block text-sm font-medium text-zinc-700">Upload Screenshot (Optional)</label>
+                    <label className="block text-sm font-medium text-zinc-700">{t.uploadScreenshot}</label>
                     <div className="flex items-center justify-center w-full">
                         <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-zinc-300 border-dashed rounded-lg cursor-pointer bg-zinc-50 hover:bg-zinc-100 transition-colors">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -213,7 +299,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                 ) : (
                                     <>
                                         <Upload className="w-8 h-8 mb-3 text-zinc-400" />
-                                        <p className="text-sm text-zinc-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                                        <p className="text-sm text-zinc-500"><span className="font-semibold">{t.clickToUpload}</span> {t.dragDrop}</p>
                                     </>
                                 )}
                             </div>
@@ -236,9 +322,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         : 'bg-red-600 hover:bg-red-700 shadow-lg shadow-red-200'
                     }`}
                 >
-                    {feedbackStatus === 'idle' && 'Submit Feedback'}
-                    {feedbackStatus === 'sending' && 'Sending...'}
-                    {feedbackStatus === 'sent' && 'Thank You!'}
+                    {feedbackStatus === 'idle' && t.submitFeedback}
+                    {feedbackStatus === 'sending' && t.sending}
+                    {feedbackStatus === 'sent' && t.thankYou}
                 </button>
               </form>
             )}
@@ -250,17 +336,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className="w-16 h-16 bg-red-600 rounded-2xl mx-auto flex items-center justify-center text-white mb-4 shadow-lg shadow-red-200">
                         <SettingsIcon size={32} />
                     </div>
-                    <h3 className="text-xl font-bold text-zinc-900 mb-1">Digital Jianzhi</h3>
+                    <h3 className="text-xl font-bold text-zinc-900 mb-1">{t.appTitle}</h3>
                     <p className="text-zinc-500 text-sm">Version 1.2.0</p>
                 </div>
 
                 <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-100 bg-white">
-                        <span className="text-zinc-500">Creator</span>
+                        <span className="text-zinc-500">{t.creator}</span>
                         <span className="font-medium text-zinc-900">cracks_yi</span>
                     </div>
                     <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-100 bg-white">
-                        <span className="text-zinc-500">Contact</span>
+                        <span className="text-zinc-500">{t.contact}</span>
                         <a href="mailto:cracks@yeah.net" className="font-medium text-red-600 hover:underline">cracks@yeah.net</a>
                     </div>
                 </div>
