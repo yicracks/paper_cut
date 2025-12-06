@@ -402,19 +402,28 @@ const App = () => {
   const getCutGuidePos = () => {
       if (activeGuideStep !== 'cut_canvas') return undefined;
       
+      // Offset calculation:
+      // Padding of bg-white container (p-2) = 0.5rem = 8px
+      // Border of JianzhiCanvas (border-2) = 2px
+      // Border of bg-white (border) = 1px
+      // Total approx offset to Canvas (0,0) from Container (0,0) = 11px
+      const OFFSET = 11; 
+
       if (mode === 'custom' && simulationRef.current instanceof PaperSimulation) {
           const sim = simulationRef.current;
           return {
-              x: (sim.minX + sim.maxX) / 2,
-              y: (sim.minY + sim.maxY) / 2
+              x: (sim.minX + sim.maxX) / 2 + OFFSET,
+              y: (sim.minY + sim.maxY) / 2 + OFFSET
           };
       } else if (mode === 'preset') {
           // Preset always centers at canvas center, pointing up
-          // A good spot is roughly up the wedge
+          // A good spot is roughly up the wedge.
+          // Wedge centroid Y approx (2/3) * Radius from center.
           const r = (SIM_SIZE / 2) * 0.95;
+          const centroidDist = r * 0.6; 
           return {
-              x: SIM_SIZE / 2,
-              y: SIM_SIZE / 2 - (r * 0.5) 
+              x: SIM_SIZE / 2 + OFFSET,
+              y: SIM_SIZE / 2 - centroidDist + OFFSET
           };
       }
       return undefined;
