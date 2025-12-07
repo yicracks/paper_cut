@@ -226,6 +226,9 @@ const App = () => {
   };
 
   const updatePreview = () => {
+    // Check if user has drawn anything before advancing from cut_canvas to cut_thickness
+    // We can infer this if history length > 0 in canvas, but here we just rely on event trigger
+    // Since updatePreview is called on InteractEnd, we know a stroke happened.
     const cutCanvas = canvasRef.current?.getCanvas();
     if (cutCanvas && simulationRef.current) {
         const texture = simulationRef.current.applyCutAndUnfold(cutCanvas, paperColor);
@@ -411,7 +414,8 @@ const App = () => {
 
   const getCutGuidePos = () => {
       if (activeGuideStep !== 'cut_canvas') return undefined;
-      const OFFSET = 11; 
+      // Padding (16) + Border (1) = 17 offset
+      const OFFSET = 17; 
       if (mode === 'custom' && simulationRef.current instanceof PaperSimulation) {
           const sim = simulationRef.current;
           return {
@@ -432,8 +436,13 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-pattern-lattice text-[#2C2C2C] pb-20 font-serif">
+      {/* Global Dark Backdrop for Guides */}
+      {activeGuideStep && (
+          <div className="fixed inset-0 bg-black/50 z-45 animate-in fade-in duration-300"></div>
+      )}
+
       {/* Header: Traditional wooden plaque style */}
-      <header className="bg-[#fffbf0] border-b border-[#d4c4b0] pt-3 pb-3 px-6 sticky top-0 z-40 shadow-sm relative">
+      <header className="bg-[#fffbf0] border-b border-[#d4c4b0] pt-3 pb-3 px-6 sticky top-0 z-40 shadow-sm">
         <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-red-800/20 to-transparent"></div>
         <div className="max-w-5xl mx-auto flex items-center justify-between">
             <div className="w-20 hidden md:block"></div>
@@ -543,7 +552,7 @@ const App = () => {
                 <div className="flex flex-col lg:flex-row items-start justify-center gap-8 animate-in slide-in-from-bottom-8 duration-500">
                     
                     {/* Left Column: Canvas + Controls */}
-                    <div className="flex flex-col gap-5 w-[500px]">
+                    <div className="flex flex-col gap-5 relative" style={activeGuideStep === 'cut_canvas' ? {zIndex: 50} : {}}>
                         
                         <div className="flex items-center justify-between px-2 border-b border-[#d4c4b0] pb-1">
                              <span className="text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">{t.step_cut}</span>
@@ -559,7 +568,7 @@ const App = () => {
                         <div className="relative">
                             {/* Canvas Frame */}
                             <div 
-                                className="bg-white p-2 border border-[#d4c4b0] shadow-md z-10 overflow-hidden chinese-card"
+                                className="bg-white p-4 border border-[#d4c4b0] shadow-md z-10 overflow-hidden chinese-card inline-block"
                                 onClick={() => {
                                     if(activeGuideStep === 'cut_tool') setActiveGuideStep('cut_canvas');
                                 }}
@@ -597,19 +606,21 @@ const App = () => {
                             )}
                         </div>
 
-                        <Controls 
-                            tool={tool}
-                            onToolChange={setTool}
-                            brushSize={brushSize}
-                            onBrushSizeChange={setBrushSize}
-                            onUndo={() => { canvasRef.current?.undo(); updatePreview(); }}
-                            onRedo={() => { canvasRef.current?.redo(); updatePreview(); }}
-                            onClear={handleResetFolds}
-                            themeColor={dynamicThemeColor}
-                            language={language}
-                            activeGuideStep={activeGuideStep}
-                            onNextGuide={handleNextGuide}
-                        />
+                        <div className="relative" style={activeGuideStep ? {zIndex: 50} : {}}>
+                           <Controls 
+                                tool={tool}
+                                onToolChange={setTool}
+                                brushSize={brushSize}
+                                onBrushSizeChange={setBrushSize}
+                                onUndo={() => { canvasRef.current?.undo(); updatePreview(); }}
+                                onRedo={() => { canvasRef.current?.redo(); updatePreview(); }}
+                                onClear={handleResetFolds}
+                                themeColor={dynamicThemeColor}
+                                language={language}
+                                activeGuideStep={activeGuideStep}
+                                onNextGuide={handleNextGuide}
+                            />
+                        </div>
                     </div>
 
                     <div className="text-[#d4c4b0] hidden lg:block self-center pt-32">
@@ -617,28 +628,34 @@ const App = () => {
                     </div>
 
                     {/* Right Column: Preview */}
-                    <div className="flex flex-col gap-5 w-[500px]">
+                    <div className="flex flex-col gap-5">
                          <div className="flex items-center justify-between px-2 border-b border-[#d4c4b0] pb-1">
                              <span className="text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">PREVIEW</span>
                          </div>
                          
                          {/* Preview Frame */}
-                         <div className="relative bg-white p-4 border border-[#d4c4b0] shadow-md w-[500px] h-[500px] flex items-center justify-center overflow-hidden chinese-card">
-                            <div className="absolute inset-0 bg-[#f9f7f2] opacity-50 pointer-events-none"></div>
-                            {previewImage ? (
-                                <img 
-                                    src={previewImage} 
-                                    alt="Preview" 
-                                    className="max-w-full max-h-full object-contain drop-shadow-md z-10" 
-                                />
-                            ) : (
-                                <div className="text-[#d4c4b0] flex flex-col items-center gap-2">
-                                    <div className="w-12 h-12 rounded-full bg-[#f0ece2] flex items-center justify-center border border-[#e5dcd1]">
-                                        <Settings size={20} className="animate-spin-slow" />
+                         <div className="relative bg-white p-4 border border-[#d4c4b0] shadow-md flex items-center justify-center overflow-hidden chinese-card inline-block">
+                            {/* Inner container sized exactly to SIM_SIZE to match Canvas */}
+                            <div 
+                                style={{ width: SIM_SIZE, height: SIM_SIZE }}
+                                className="relative flex items-center justify-center bg-[#f9f7f2]"
+                            >
+                                <div className="absolute inset-0 bg-[#f9f7f2] opacity-50 pointer-events-none"></div>
+                                {previewImage ? (
+                                    <img 
+                                        src={previewImage} 
+                                        alt="Preview" 
+                                        className="max-w-full max-h-full object-contain drop-shadow-md z-10" 
+                                    />
+                                ) : (
+                                    <div className="text-[#d4c4b0] flex flex-col items-center gap-2 z-10">
+                                        <div className="w-12 h-12 rounded-full bg-[#f0ece2] flex items-center justify-center border border-[#e5dcd1]">
+                                            <Settings size={20} className="animate-spin-slow" />
+                                        </div>
+                                        <span className="text-sm font-serif">Generating...</span>
                                     </div>
-                                    <span className="text-sm font-serif">Generating...</span>
-                                </div>
-                            )}
+                                )}
+                            </div>
 
                             {activeGuideStep === 'cut_preview' && (
                                 <GuideOverlay 
