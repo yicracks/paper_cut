@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Scissors, Settings, Languages, ArrowRight, Hand, Eye, Download, Brush } from 'lucide-react';
+import { Scissors, Settings, Languages, ArrowRight, Hand, Eye, Download, Brush, Scroll } from 'lucide-react';
 import JianzhiCanvas, { JianzhiCanvasHandle } from './components/JianzhiCanvas';
 import Controls from './components/Controls';
 import FoldingControls from './components/FoldingControls';
@@ -40,7 +39,7 @@ const App = () => {
   } | null>(null);
   
   // Paper Appearance
-  const [paperColor, setPaperColor] = useState('#DC2626');
+  const [paperColor, setPaperColor] = useState('#C23531'); // Traditional China Red
 
   // Settings State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -49,11 +48,9 @@ const App = () => {
   });
 
   // Interactive Guide State Sequence
-  // FOLD: fold_up -> fold_right -> fold_br -> fold_finish
-  // CUT: cut_tool -> cut_canvas -> cut_thickness -> cut_shapes -> cut_preview -> cut_save -> cut_reset
   const [activeGuideStep, setActiveGuideStep] = useState<string | null>(null);
   
-  // Track completion to ensure we don't show it every time
+  // Track completion
   const guideHistory = useRef({ 
       foldStarted: false,
       cutStarted: false
@@ -114,15 +111,13 @@ const App = () => {
           simulationRef.current = new PaperSimulation(SIM_SIZE);
           setFoldCount(0);
           setFoldSequence([]);
-          // If switching back to custom and haven't finished guide, maybe restart? 
-          // For now, let's reset if it was interrupted
           if (!guideHistory.current.foldStarted) {
              setTimeout(() => setActiveGuideStep('fold_up'), 500);
              guideHistory.current.foldStarted = true;
           }
       } else {
           simulationRef.current = new PresetSimulation(SIM_SIZE, selectedPreset);
-          setActiveGuideStep(null); // No guide for preset
+          setActiveGuideStep(null); 
       }
       
       if (foldCanvasRef.current && simulationRef.current) {
@@ -165,8 +160,6 @@ const App = () => {
     } else if (activeGuideStep === 'fold_br' && dir === 'BR') {
         setActiveGuideStep('fold_finish');
     } else {
-        // If user deviates, we might want to dismiss or adapt. 
-        // For strict tutorial, let's just dismiss if they do something else.
         if (activeGuideStep) setActiveGuideStep(null);
     }
 
@@ -223,7 +216,7 @@ const App = () => {
 
   const handleFinishFolding = () => {
     if (activeGuideStep === 'fold_finish') {
-        setActiveGuideStep(null); // Will trigger cut sequence on phase change
+        setActiveGuideStep(null); 
     } else {
         setActiveGuideStep(null);
     }
@@ -238,7 +231,6 @@ const App = () => {
         const texture = simulationRef.current.applyCutAndUnfold(cutCanvas, paperColor);
         setPreviewImage(texture);
         
-        // Advance Cut Guide from Canvas -> Thickness -> Shapes -> Preview
         if (activeGuideStep === 'cut_canvas') {
             setActiveGuideStep('cut_thickness');
         }
@@ -251,7 +243,7 @@ const App = () => {
       } else if (activeGuideStep === 'cut_shapes') {
           setActiveGuideStep('cut_preview');
       } else if (activeGuideStep === 'cut_reset') {
-          setActiveGuideStep(null); // Finish
+          setActiveGuideStep(null);
       }
   };
 
@@ -296,7 +288,6 @@ const App = () => {
 
       if (!simulationRef.current || !previewImage) return;
 
-      // Ensure high res result
       const cutCanvas = canvasRef.current?.getCanvas();
       let finalResultImage = previewImage;
       const cutImage = cutCanvas ? cutCanvas.toDataURL() : undefined;
@@ -315,7 +306,6 @@ const App = () => {
       link.click();
       document.body.removeChild(link);
 
-      // Always save to gallery including cut pattern if available
       await saveToGallery({
           id: ts.val.toString(),
           timestamp: ts.val,
@@ -335,18 +325,18 @@ const App = () => {
 
   const StepIndicator = ({ step, label, isActive }: { step: string, label: string, isActive: boolean }) => {
       const activeColorStyle = (isActive && appSettings.dynamicTheme) ? { color: paperColor } : {};
-      const barStyle = (isActive && appSettings.dynamicTheme) ? { backgroundColor: paperColor } : {};
-
+      
+      // Traditional knot/dot style
       return (
         <div 
-          className={`flex flex-col items-center gap-1 transition-all ${isActive ? 'opacity-100 text-red-600' : 'text-zinc-300 opacity-60'}`}
+          className={`flex flex-col items-center gap-2 transition-all duration-500 ${isActive ? 'opacity-100' : 'opacity-50'}`}
           style={isActive ? activeColorStyle : {}}
         >
-          <div 
-            className={`w-8 h-1.5 rounded-full ${isActive ? 'bg-red-600' : 'bg-zinc-200'}`}
-            style={isActive ? barStyle : {}}
-          ></div>
-          <span className="text-[10px] font-bold uppercase tracking-wider">{label}</span>
+          <div className="relative flex items-center justify-center w-8 h-8">
+             <div className={`w-full h-full border-2 transform rotate-45 transition-colors ${isActive ? 'border-red-800 bg-red-50' : 'border-zinc-300'}`}></div>
+             <div className={`absolute w-2 h-2 rounded-full ${isActive ? 'bg-red-700' : 'bg-zinc-300'}`}></div>
+          </div>
+          <span className={`text-xs font-serif font-bold tracking-widest ${isActive ? 'text-red-900' : 'text-zinc-400'}`}>{label}</span>
         </div>
       );
   };
@@ -357,7 +347,6 @@ const App = () => {
     setLanguage(prev => prev === 'en' ? 'zh' : 'en');
   };
 
-  // Guide Components
   const GuideOverlay = ({ 
       text, 
       subtext, 
@@ -390,21 +379,27 @@ const App = () => {
                 className={isTargeted ? "absolute flex flex-col items-center justify-center" : "relative flex flex-col items-center justify-center"}
                 style={isTargeted ? { left: targetPos!.x, top: targetPos!.y, transform: 'translate(-50%, -50%)' } : {}}
             >
-                {/* Pulse Ring */}
+                {/* Pulse Ring - Gold style for chinese theme */}
                 {isTargeted ? (
-                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 border-4 border-red-400 rounded-full animate-pulse opacity-40 pointer-events-none"></div>
+                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 border-2 border-yellow-500 rounded-full animate-pulse opacity-60 pointer-events-none" style={{ boxShadow: '0 0 15px rgba(234, 179, 8, 0.4)' }}></div>
                 ) : (
                      <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
-                         <div className="w-full h-full border-4 border-red-400 rounded-xl animate-pulse opacity-20"></div>
+                         <div className="w-full h-full border-4 border-yellow-600/30 rounded-xl animate-pulse"></div>
                      </div>
                 )}
             
-                {/* Tooltip */}
-                <div className={`bg-red-600 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-3 animate-in fade-in zoom-in-90 duration-300 pointer-events-auto relative z-10 ${passThrough ? 'pointer-events-none opacity-90' : ''}`}>
-                    <Icon size={20} className="animate-bounce" />
+                {/* Tooltip - Scroll Style */}
+                <div className={`bg-[#fffbf0] text-red-900 px-6 py-3 border border-[#d4c4b0] shadow-xl flex items-center gap-3 animate-in fade-in zoom-in-90 duration-300 pointer-events-auto relative z-10 ${passThrough ? 'pointer-events-none opacity-90' : ''}`} style={{ boxShadow: '4px 4px 0 rgba(185, 28, 28, 0.1)' }}>
+                    {/* Corner accents */}
+                    <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-red-800"></div>
+                    <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-red-800"></div>
+                    <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-red-800"></div>
+                    <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-red-800"></div>
+
+                    <Icon size={20} className="animate-bounce text-red-700" />
                     <div className="flex flex-col whitespace-nowrap">
-                        <span className="font-bold text-sm">{text}</span>
-                        <span className="text-[10px] opacity-90">{subtext}</span>
+                        <span className="font-serif font-bold text-sm tracking-wide">{text}</span>
+                        <span className="text-[10px] opacity-80 text-zinc-600">{subtext}</span>
                     </div>
                 </div>
             </div>
@@ -416,14 +411,7 @@ const App = () => {
 
   const getCutGuidePos = () => {
       if (activeGuideStep !== 'cut_canvas') return undefined;
-      
-      // Offset calculation:
-      // Padding of bg-white container (p-2) = 0.5rem = 8px
-      // Border of JianzhiCanvas (border-2) = 2px
-      // Border of bg-white (border) = 1px
-      // Total approx offset to Canvas (0,0) from Container (0,0) = 11px
       const OFFSET = 11; 
-
       if (mode === 'custom' && simulationRef.current instanceof PaperSimulation) {
           const sim = simulationRef.current;
           return {
@@ -431,9 +419,6 @@ const App = () => {
               y: (sim.minY + sim.maxY) / 2 + OFFSET
           };
       } else if (mode === 'preset') {
-          // Preset always centers at canvas center, pointing up
-          // A good spot is roughly up the wedge.
-          // Wedge centroid Y approx (2/3) * Radius from center.
           const r = (SIM_SIZE / 2) * 0.95;
           const centroidDist = r * 0.6; 
           return {
@@ -446,26 +431,31 @@ const App = () => {
   const cutGuidePos = getCutGuidePos();
 
   return (
-    <div className="min-h-screen bg-grid-pattern text-zinc-800 pb-20">
-      <header className="bg-white border-b border-zinc-200 pt-4 pb-2 px-6 sticky top-0 z-40 shadow-sm">
+    <div className="min-h-screen bg-pattern-lattice text-[#2C2C2C] pb-20 font-serif">
+      {/* Header: Traditional wooden plaque style */}
+      <header className="bg-[#fffbf0] border-b border-[#d4c4b0] pt-3 pb-3 px-6 sticky top-0 z-40 shadow-sm relative">
+        <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-red-800/20 to-transparent"></div>
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-            <div className="w-20"></div>
+            <div className="w-20 hidden md:block"></div>
 
-            <div className="flex flex-col items-center gap-4">
-                <div className="flex items-center gap-3">
+            <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center gap-3 border-b-2 border-red-800/10 pb-2 px-6">
                     <div 
-                        className={`w-10 h-10 ${!dynamicThemeColor && 'bg-red-600'} rounded-lg flex items-center justify-center text-white shadow-sm overflow-hidden`}
+                        className={`w-10 h-10 ${!dynamicThemeColor && 'bg-[#C23531]'} rounded-sm flex items-center justify-center text-white shadow-md overflow-hidden border-2 border-[#a02622]`}
                         style={dynamicThemeColor ? { backgroundColor: dynamicThemeColor } : {}}
                     >
-                        <Scissors size={18} strokeWidth={2.5} style={{ transform: 'rotate(-45deg)' }} />
+                        <Scissors size={20} strokeWidth={2} style={{ transform: 'rotate(-45deg)' }} />
                     </div>
-                    <h1 className="text-xl font-bold tracking-tight text-zinc-900">
+                    <h1 className="text-2xl font-bold tracking-widest text-red-900" style={{ fontFamily: '"Noto Serif SC", serif' }}>
                         {t.appTitle}
                     </h1>
                 </div>
                 
-                <div className="flex gap-8">
+                <div className="flex gap-12 mt-1">
                     <StepIndicator step="folding" label={t.step_fold} isActive={phase === 'folding'} />
+                    <div className="text-zinc-300 pt-1">
+                        <Scroll size={16} className="rotate-90" />
+                    </div>
                     <StepIndicator step="cutting" label={t.step_cut} isActive={phase === 'cutting'} />
                 </div>
             </div>
@@ -473,15 +463,17 @@ const App = () => {
             <div className="w-20 flex justify-end gap-2">
                 <button 
                     onClick={toggleLanguage}
-                    className="p-2 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-full transition-colors"
+                    className="p-2 text-[#8c7b6c] hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                    title="Change Language"
                 >
-                    <Languages size={24} />
+                    <Languages size={22} />
                 </button>
                 <button 
                     onClick={() => setIsSettingsOpen(true)}
-                    className="p-2 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-full transition-colors"
+                    className="p-2 text-[#8c7b6c] hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                    title="Settings"
                 >
-                    <Settings size={24} />
+                    <Settings size={22} />
                 </button>
             </div>
         </div>
@@ -493,28 +485,35 @@ const App = () => {
            
            {phase === 'folding' && (
              <div className="flex flex-col items-center gap-8 animate-in fade-in duration-500 max-w-lg mx-auto">
-               <div className="relative w-full h-[600px] bg-white/50 rounded-xl border-2 border-dashed border-zinc-200 overflow-hidden flex items-center justify-center">
-                   <div 
-                      className="relative bg-white shadow-inner border border-zinc-100"
-                      style={{ width: VISUAL_SIZE, height: VISUAL_SIZE }}
-                   >
-                       <div className="absolute inset-0 border border-zinc-100 bg-zinc-50 opacity-50"></div>
-                       <canvas 
-                            ref={foldCanvasRef}
-                            width={VISUAL_SIZE}
-                            height={VISUAL_SIZE}
-                            className="absolute inset-0 w-full h-full"
-                       />
-                       
-                       {isAnimating && animationData && (
-                         <FoldAnimator 
-                            image={animationData.image}
-                            direction={animationData.dir}
-                            onComplete={handleAnimationComplete}
-                            bounds={animationData.bounds}
-                            duration={300} 
-                         />
-                       )}
+               
+               {/* Folding Canvas Frame */}
+               <div className="relative p-3 bg-white border border-[#d4c4b0] shadow-lg rounded-sm chinese-card">
+                   {/* Mounting Silk Border Effect */}
+                   <div className="bg-[#f0ece2] p-4 border border-[#e5dcd1]">
+                       <div className="relative w-full h-[500px] bg-white border border-zinc-200 overflow-hidden flex items-center justify-center shadow-inner">
+                           <div 
+                              className="relative"
+                              style={{ width: VISUAL_SIZE, height: VISUAL_SIZE }}
+                           >
+                               <div className="absolute inset-0 border border-zinc-100 bg-zinc-50/50"></div>
+                               <canvas 
+                                    ref={foldCanvasRef}
+                                    width={VISUAL_SIZE}
+                                    height={VISUAL_SIZE}
+                                    className="absolute inset-0 w-full h-full"
+                               />
+                               
+                               {isAnimating && animationData && (
+                                 <FoldAnimator 
+                                    image={animationData.image}
+                                    direction={animationData.dir}
+                                    onComplete={handleAnimationComplete}
+                                    bounds={animationData.bounds}
+                                    duration={300} 
+                                 />
+                               )}
+                           </div>
+                       </div>
                    </div>
                </div>
                
@@ -541,16 +540,16 @@ const App = () => {
            )}
 
            {phase === 'cutting' && (
-                <div className="flex flex-col lg:flex-row items-start justify-center gap-12 animate-in slide-in-from-bottom-8 duration-500">
+                <div className="flex flex-col lg:flex-row items-start justify-center gap-8 animate-in slide-in-from-bottom-8 duration-500">
                     
                     {/* Left Column: Canvas + Controls */}
-                    <div className="flex flex-col gap-6 w-[500px]">
+                    <div className="flex flex-col gap-5 w-[500px]">
                         
-                        <div className="flex items-center justify-between px-2">
-                             <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">{t.step_cut}</span>
+                        <div className="flex items-center justify-between px-2 border-b border-[#d4c4b0] pb-1">
+                             <span className="text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">{t.step_cut}</span>
                              <button 
                                 onClick={handleSaveCut}
-                                className="text-zinc-500 hover:text-red-600 flex items-center gap-1 text-xs font-bold uppercase transition-colors"
+                                className="text-[#8c7b6c] hover:text-red-800 flex items-center gap-1 text-xs font-bold uppercase transition-colors"
                              >
                                 <Download size={14} />
                                 {t.savePattern}
@@ -558,8 +557,9 @@ const App = () => {
                         </div>
                         
                         <div className="relative">
+                            {/* Canvas Frame */}
                             <div 
-                                className="bg-white p-2 rounded-xl shadow-lg border border-zinc-100 z-10 overflow-hidden"
+                                className="bg-white p-2 border border-[#d4c4b0] shadow-md z-10 overflow-hidden chinese-card"
                                 onClick={() => {
                                     if(activeGuideStep === 'cut_tool') setActiveGuideStep('cut_canvas');
                                 }}
@@ -576,7 +576,6 @@ const App = () => {
                                 />
                             </div>
 
-                            {/* Intelligent Cut Guides */}
                             {activeGuideStep === 'cut_tool' && (
                                 <GuideOverlay 
                                     text={t.guide_cut_tool} 
@@ -598,7 +597,6 @@ const App = () => {
                             )}
                         </div>
 
-                        {/* Vertically aligned Controls under the Canvas */}
                         <Controls 
                             tool={tool}
                             onToolChange={setTool}
@@ -614,33 +612,34 @@ const App = () => {
                         />
                     </div>
 
-                    <div className="text-zinc-300 hidden lg:block self-center pt-32">
+                    <div className="text-[#d4c4b0] hidden lg:block self-center pt-32">
                         <ArrowRight size={32} />
                     </div>
 
                     {/* Right Column: Preview */}
-                    <div className="flex flex-col gap-6 w-[500px]">
-                         <div className="flex items-center justify-between px-2">
-                             <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Preview</span>
+                    <div className="flex flex-col gap-5 w-[500px]">
+                         <div className="flex items-center justify-between px-2 border-b border-[#d4c4b0] pb-1">
+                             <span className="text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">PREVIEW</span>
                          </div>
                          
-                         <div className="relative bg-white p-2 rounded-xl shadow-lg border border-zinc-100 w-[500px] h-[500px] flex items-center justify-center overflow-hidden bg-zinc-50/50">
+                         {/* Preview Frame */}
+                         <div className="relative bg-white p-4 border border-[#d4c4b0] shadow-md w-[500px] h-[500px] flex items-center justify-center overflow-hidden chinese-card">
+                            <div className="absolute inset-0 bg-[#f9f7f2] opacity-50 pointer-events-none"></div>
                             {previewImage ? (
                                 <img 
                                     src={previewImage} 
                                     alt="Preview" 
-                                    className="max-w-full max-h-full object-contain drop-shadow-md" 
+                                    className="max-w-full max-h-full object-contain drop-shadow-md z-10" 
                                 />
                             ) : (
-                                <div className="text-zinc-300 flex flex-col items-center gap-2">
-                                    <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center">
+                                <div className="text-[#d4c4b0] flex flex-col items-center gap-2">
+                                    <div className="w-12 h-12 rounded-full bg-[#f0ece2] flex items-center justify-center border border-[#e5dcd1]">
                                         <Settings size={20} className="animate-spin-slow" />
                                     </div>
-                                    <span className="text-sm">Generating Preview...</span>
+                                    <span className="text-sm font-serif">Generating...</span>
                                 </div>
                             )}
 
-                             {/* Preview Guide Overlay */}
                             {activeGuideStep === 'cut_preview' && (
                                 <GuideOverlay 
                                     text={t.guide_cut_preview} 
@@ -651,12 +650,11 @@ const App = () => {
                             )}
                          </div>
 
-                         {/* Separate Save Result Button */}
                          <div className="relative">
                             <button 
                                 onClick={handleSaveResult}
-                                className={`w-full py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-white shadow-lg ${
-                                    dynamicThemeColor ? '' : 'bg-red-600 hover:bg-red-700 shadow-red-500/30'
+                                className={`w-full py-4 rounded-sm font-serif font-bold transition-all flex items-center justify-center gap-2 text-white shadow-lg border-2 border-[#a02622] btn-seal ${
+                                    dynamicThemeColor ? '' : 'bg-[#C23531] hover:bg-[#b91c1c]'
                                 }`}
                                 style={dynamicThemeColor ? { backgroundColor: dynamicThemeColor } : {}}
                             >
@@ -666,11 +664,11 @@ const App = () => {
 
                             {isSaveGuide && (
                                 <>
-                                    <div className="absolute inset-0 -m-1 border-4 border-red-500 rounded-xl animate-pulse pointer-events-none"></div>
-                                    <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-40 bg-red-600 text-white text-xs p-2 rounded-lg shadow-xl text-center pointer-events-none z-50">
-                                        <div className="font-bold mb-0.5">{t.guide_cut_save}</div>
+                                    <div className="absolute inset-0 -m-1 border-4 border-yellow-500 rounded-sm animate-pulse pointer-events-none"></div>
+                                    <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-40 bg-[#fffbf0] text-red-900 border border-[#d4c4b0] p-2 rounded-sm shadow-xl text-center pointer-events-none z-50">
+                                        <div className="font-bold mb-0.5 font-serif">{t.guide_cut_save}</div>
                                         <div className="opacity-90 text-[10px]">{t.guide_cut_save_sub}</div>
-                                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-600 rotate-45"></div>
+                                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#fffbf0] border-r border-b border-[#d4c4b0] rotate-45"></div>
                                     </div>
                                 </>
                             )}

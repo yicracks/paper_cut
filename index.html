@@ -6,16 +6,67 @@
     <title>Digital Jianzhi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      body {
-        background-color: #f4f4f5; /* zinc-100 */
-        margin: 0;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        touch-action: none; /* Prevent browser handling of gestures */
+      :root {
+        --color-rice: #F7F4ED;
+        --color-ink: #2C2C2C;
+        --color-red: #C23531;
+        --color-gold: #D4AF37;
       }
-      /* Custom pattern background */
-      .bg-grid-pattern {
-        background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
-        background-size: 20px 20px;
+      body {
+        background-color: var(--color-rice);
+        margin: 0;
+        font-family: 'Songti SC', 'Noto Serif SC', 'SimSun', 'Times New Roman', serif; /* Serif for traditional look */
+        color: var(--color-ink);
+        touch-action: none; 
+      }
+      
+      /* Solid Rice Paper Background (Pattern Removed) */
+      .bg-pattern-lattice {
+        background-color: #F7F4ED;
+      }
+
+      /* Card Style mimicking Rice Paper mounting */
+      .chinese-card {
+        background-color: #fff;
+        border: 1px solid #d4c4b0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        position: relative;
+      }
+      .chinese-card::after {
+        content: '';
+        position: absolute;
+        inset: 4px;
+        border: 1px solid #eaddcf;
+        pointer-events: none;
+      }
+
+      /* Seal/Stamp Button Style */
+      .btn-seal {
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+      }
+      .btn-seal:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 0 #b91c1c; /* Shadow creates 3D seal effect */
+      }
+      .btn-seal:active {
+        transform: translateY(1px);
+        box-shadow: 0 1px 0 #b91c1c;
+      }
+      
+      /* Scrollbar customization for webkit */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #F7F4ED; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #d4c4b0; 
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #C23531; 
       }
     </style>
   <script type="importmap">

@@ -101,7 +101,7 @@ export const TEXT = {
     t_step3_desc: "Watch the real-time preview on the right. Click 'Save Result' to download and add to your gallery."
   },
   zh: {
-    appTitle: "数字剪纸艺术",
+    appTitle: "剪窗花",
     step_fold: "折叠",
     step_cut: "剪裁",
     
