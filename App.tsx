@@ -11,6 +11,29 @@ import { DrawingTool, FoldDirection, FoldingMode, SimulationEngine, AppSettings,
 import { saveToGallery } from './utils/db';
 import { TEXT } from './utils/i18n';
 
+// Hook for responsive display size
+const useDisplaySize = (baseSize: number, margin: number = 48) => {
+    const [displaySize, setDisplaySize] = useState(baseSize);
+
+    useEffect(() => {
+        const handleResize = () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            // Ensure it fits within width minus margin, but max out at baseSize
+            // Also consider height to avoid scroll on landscape if needed, but width is primary constraint here
+            const size = Math.min(width - margin, baseSize);
+            setDisplaySize(Math.floor(size));
+        };
+
+        window.addEventListener('resize', handleResize);
+        handleResize(); // Initial check
+
+        return () => window.removeEventListener('resize', handleResize);
+    }, [baseSize, margin]);
+
+    return displaySize;
+};
+
 const App = () => {
   const [phase, setPhase] = useState<'folding' | 'cutting'>('folding');
   
@@ -57,6 +80,9 @@ const App = () => {
   });
 
   const SIM_SIZE = 500;
+  const displaySize = useDisplaySize(SIM_SIZE);
+  const scaleFactor = displaySize / SIM_SIZE;
+
   const simulationRef = useRef<SimulationEngine | null>(null);
   const foldCanvasRef = useRef<HTMLCanvasElement>(null);
   
@@ -65,7 +91,6 @@ const App = () => {
   }
 
   const MAX_FOLDS = 5;
-  const VISUAL_SIZE = 500; 
   
   const canvasRef = useRef<JianzhiCanvasHandle>(null);
 
@@ -103,7 +128,7 @@ const App = () => {
     if (phase === 'folding' && foldCanvasRef.current && simulationRef.current && !isAnimating) {
         simulationRef.current.renderFoldedState(foldCanvasRef.current, paperColor);
     }
-  }, [phase, paperColor, isAnimating]);
+  }, [phase, paperColor, isAnimating, displaySize]); // Re-render when size changes
 
   const handleModeChange = (newMode: FoldingMode) => {
       setMode(newMode);
@@ -122,7 +147,7 @@ const App = () => {
       
       if (foldCanvasRef.current && simulationRef.current) {
           const ctx = foldCanvasRef.current.getContext('2d');
-          ctx?.clearRect(0, 0, VISUAL_SIZE, VISUAL_SIZE);
+          ctx?.clearRect(0, 0, displaySize, displaySize);
           simulationRef.current.renderFoldedState(foldCanvasRef.current, paperColor);
       }
   };
@@ -209,7 +234,7 @@ const App = () => {
     
     if (foldCanvasRef.current && simulationRef.current) {
         const ctx = foldCanvasRef.current.getContext('2d');
-        ctx?.clearRect(0,0,VISUAL_SIZE, VISUAL_SIZE);
+        ctx?.clearRect(0,0,displaySize, displaySize);
         setTimeout(() => simulationRef.current?.renderFoldedState(foldCanvasRef.current!, paperColor), 10);
     }
   };
@@ -226,9 +251,6 @@ const App = () => {
   };
 
   const updatePreview = () => {
-    // Check if user has drawn anything before advancing from cut_canvas to cut_thickness
-    // We can infer this if history length > 0 in canvas, but here we just rely on event trigger
-    // Since updatePreview is called on InteractEnd, we know a stroke happened.
     const cutCanvas = canvasRef.current?.getCanvas();
     if (cutCanvas && simulationRef.current) {
         const texture = simulationRef.current.applyCutAndUnfold(cutCanvas, paperColor);
@@ -329,7 +351,6 @@ const App = () => {
   const StepIndicator = ({ step, label, isActive }: { step: string, label: string, isActive: boolean }) => {
       const activeColorStyle = (isActive && appSettings.dynamicTheme) ? { color: paperColor } : {};
       
-      // Traditional knot/dot style
       return (
         <div 
           className={`flex flex-col items-center gap-2 transition-all duration-500 ${isActive ? 'opacity-100' : 'opacity-50'}`}
@@ -414,23 +435,30 @@ const App = () => {
 
   const getCutGuidePos = () => {
       if (activeGuideStep !== 'cut_canvas') return undefined;
-      // Padding (16) + Border (1) = 17 offset
+      // Padding (16) + Border (1) = 17 offset. 
+      // Need to scale this offset because the canvas is scaled visually, but the coordinate system of the overlay is usually 1:1 with container.
+      // However, our logic maps logic coordinates.
+      // We will project coordinates to the visual size.
       const OFFSET = 17; 
+      
+      let logicalX = 0, logicalY = 0;
+
       if (mode === 'custom' && simulationRef.current instanceof PaperSimulation) {
           const sim = simulationRef.current;
-          return {
-              x: (sim.minX + sim.maxX) / 2 + OFFSET,
-              y: (sim.minY + sim.maxY) / 2 + OFFSET
-          };
+          logicalX = (sim.minX + sim.maxX) / 2;
+          logicalY = (sim.minY + sim.maxY) / 2;
       } else if (mode === 'preset') {
           const r = (SIM_SIZE / 2) * 0.95;
           const centroidDist = r * 0.6; 
-          return {
-              x: SIM_SIZE / 2 + OFFSET,
-              y: SIM_SIZE / 2 - centroidDist + OFFSET
-          };
+          logicalX = SIM_SIZE / 2;
+          logicalY = SIM_SIZE / 2 - centroidDist;
       }
-      return undefined;
+      
+      // Map to visual coordinates
+      return {
+          x: logicalX * scaleFactor + OFFSET,
+          y: logicalY * scaleFactor + OFFSET
+      };
   };
   const cutGuidePos = getCutGuidePos();
 
@@ -455,12 +483,12 @@ const App = () => {
                     >
                         <Scissors size={20} strokeWidth={2} style={{ transform: 'rotate(-45deg)' }} />
                     </div>
-                    <h1 className="text-2xl font-bold tracking-widest text-red-900" style={{ fontFamily: '"Noto Serif SC", serif' }}>
+                    <h1 className="text-xl md:text-2xl font-bold tracking-widest text-red-900 whitespace-nowrap" style={{ fontFamily: '"Noto Serif SC", serif' }}>
                         {t.appTitle}
                     </h1>
                 </div>
                 
-                <div className="flex gap-12 mt-1">
+                <div className="flex gap-8 md:gap-12 mt-1">
                     <StepIndicator step="folding" label={t.step_fold} isActive={phase === 'folding'} />
                     <div className="text-zinc-300 pt-1">
                         <Scroll size={16} className="rotate-90" />
@@ -488,7 +516,7 @@ const App = () => {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto mt-8 px-4 flex flex-col items-center gap-8">
+      <main className="max-w-6xl mx-auto mt-8 px-2 md:px-4 flex flex-col items-center gap-8">
         
         <div className={`relative w-full transition-all duration-500`}>
            
@@ -499,17 +527,18 @@ const App = () => {
                <div className="relative p-3 bg-white border border-[#d4c4b0] shadow-lg rounded-sm chinese-card">
                    {/* Mounting Silk Border Effect */}
                    <div className="bg-[#f0ece2] p-4 border border-[#e5dcd1]">
-                       <div className="relative w-full h-[500px] bg-white border border-zinc-200 overflow-hidden flex items-center justify-center shadow-inner">
+                       <div className="relative bg-white border border-zinc-200 overflow-hidden flex items-center justify-center shadow-inner" style={{ width: displaySize, height: displaySize }}>
                            <div 
                               className="relative"
-                              style={{ width: VISUAL_SIZE, height: VISUAL_SIZE }}
+                              style={{ width: displaySize, height: displaySize }}
                            >
                                <div className="absolute inset-0 border border-zinc-100 bg-zinc-50/50"></div>
                                <canvas 
                                     ref={foldCanvasRef}
-                                    width={VISUAL_SIZE}
-                                    height={VISUAL_SIZE}
-                                    className="absolute inset-0 w-full h-full"
+                                    width={SIM_SIZE}
+                                    height={SIM_SIZE}
+                                    style={{ width: displaySize, height: displaySize }}
+                                    className="absolute inset-0"
                                />
                                
                                {isAnimating && animationData && (
@@ -549,12 +578,12 @@ const App = () => {
            )}
 
            {phase === 'cutting' && (
-                <div className="flex flex-col lg:flex-row items-start justify-center gap-8 animate-in slide-in-from-bottom-8 duration-500">
+                <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-8 animate-in slide-in-from-bottom-8 duration-500">
                     
                     {/* Left Column: Canvas + Controls */}
-                    <div className="flex flex-col gap-5 relative" style={activeGuideStep === 'cut_canvas' ? {zIndex: 50} : {}}>
+                    <div className="flex flex-col gap-5 relative w-full lg:w-auto items-center" style={activeGuideStep === 'cut_canvas' ? {zIndex: 50} : {}}>
                         
-                        <div className="flex items-center justify-between px-2 border-b border-[#d4c4b0] pb-1">
+                        <div className="flex items-center justify-between w-full max-w-[500px] px-2 border-b border-[#d4c4b0] pb-1">
                              <span className="text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">{t.step_cut}</span>
                              <button 
                                 onClick={handleSaveCut}
@@ -577,6 +606,7 @@ const App = () => {
                                     ref={canvasRef}
                                     width={SIM_SIZE}
                                     height={SIM_SIZE}
+                                    displaySize={displaySize}
                                     tool={tool}
                                     brushSize={brushSize}
                                     onInit={initCutCanvas}
@@ -606,7 +636,7 @@ const App = () => {
                             )}
                         </div>
 
-                        <div className="relative" style={activeGuideStep ? {zIndex: 50} : {}}>
+                        <div className="relative w-full max-w-[500px]" style={activeGuideStep ? {zIndex: 50} : {}}>
                            <Controls 
                                 tool={tool}
                                 onToolChange={setTool}
@@ -628,16 +658,16 @@ const App = () => {
                     </div>
 
                     {/* Right Column: Preview */}
-                    <div className="flex flex-col gap-5">
-                         <div className="flex items-center justify-between px-2 border-b border-[#d4c4b0] pb-1">
+                    <div className="flex flex-col gap-5 w-full lg:w-auto items-center">
+                         <div className="flex items-center justify-between w-full max-w-[500px] px-2 border-b border-[#d4c4b0] pb-1">
                              <span className="text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">PREVIEW</span>
                          </div>
                          
                          {/* Preview Frame */}
                          <div className="relative bg-white p-4 border border-[#d4c4b0] shadow-md flex items-center justify-center overflow-hidden chinese-card inline-block">
-                            {/* Inner container sized exactly to SIM_SIZE to match Canvas */}
+                            {/* Inner container sized exactly to displaySize to match Canvas visual */}
                             <div 
-                                style={{ width: SIM_SIZE, height: SIM_SIZE }}
+                                style={{ width: displaySize, height: displaySize }}
                                 className="relative flex items-center justify-center bg-[#f9f7f2]"
                             >
                                 <div className="absolute inset-0 bg-[#f9f7f2] opacity-50 pointer-events-none"></div>
@@ -667,7 +697,7 @@ const App = () => {
                             )}
                          </div>
 
-                         <div className="relative">
+                         <div className="relative w-full max-w-[500px]">
                             <button 
                                 onClick={handleSaveResult}
                                 className={`w-full py-4 rounded-sm font-serif font-bold transition-all flex items-center justify-center gap-2 text-white shadow-lg border-2 border-[#a02622] btn-seal ${

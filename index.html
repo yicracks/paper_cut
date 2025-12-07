@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Digital Jianzhi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -17,7 +17,8 @@
         margin: 0;
         font-family: 'Songti SC', 'Noto Serif SC', 'SimSun', 'Times New Roman', serif; /* Serif for traditional look */
         color: var(--color-ink);
-        touch-action: none; 
+        min-height: 100vh;
+        overscroll-behavior: none;
       }
       
       /* Solid Rice Paper Background (Pattern Removed) */

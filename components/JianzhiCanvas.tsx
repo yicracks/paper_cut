@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { fillCanvas, getCoordinates, removeDisconnectedParts } from '../utils/canvasUtils';
 import { DrawingTool, Point } from '../types';
@@ -6,6 +5,7 @@ import { DrawingTool, Point } from '../types';
 interface JianzhiCanvasProps {
   width: number;
   height: number;
+  displaySize?: number; // Visual size in pixels
   tool: DrawingTool;
   brushSize: number;
   onInteractStart?: () => void;
@@ -22,7 +22,7 @@ export interface JianzhiCanvasHandle {
 }
 
 const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
-  ({ width, height, tool, brushSize, onInteractStart, onInteractEnd, onInit }, ref) => {
+  ({ width, height, displaySize, tool, brushSize, onInteractStart, onInteractEnd, onInit }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const previewCanvasRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
@@ -34,6 +34,10 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
     // History stacks
     const historyStack = useRef<ImageData[]>([]);
     const redoStack = useRef<ImageData[]>([]);
+
+    // Use displaySize if provided, otherwise default to width
+    const currentDisplayWidth = displaySize || width;
+    const currentDisplayHeight = displaySize || height;
 
     const saveToHistory = () => {
       const canvas = canvasRef.current;
@@ -107,9 +111,6 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
            } else {
              fillCanvas(ctx, width, height, '#DC2626');
            }
-           // Don't call saveToHistory here to avoid pushing initial state twice if onInit does something
-           // But we need initial state for undo to blank.
-           // Manually push initial state without clearing redo (though it's empty anyway)
            historyStack.current.push(ctx.getImageData(0, 0, width, height));
         }
       }
@@ -142,11 +143,8 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
         case 'arc':
             {
                 // Simple Quadratic curve
-                // Control point offset by perpendicular distance
                 const midX = (start.x + end.x) / 2;
                 const midY = (start.y + end.y) / 2;
-                // Perpendicular vector (-dy, dx)
-                // Offset amount roughly 0.5 of distance
                 const dx = end.x - start.x;
                 const dy = end.y - start.y;
                 const controlX = midX - dy * 0.3;
@@ -189,14 +187,13 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
 
         case 'triangle':
             {
-                // Isosceles triangle
                 const bottomY = end.y;
-                const topY = start.y; // Or reverse depending on drag
-                const centerX = start.x + w / 2; // Midpoint X
+                const topY = start.y;
+                const centerX = start.x + w / 2;
                 
-                ctx.moveTo(centerX, topY); // Top tip (start Y, center X)
-                ctx.lineTo(end.x, bottomY); // Bottom Right
-                ctx.lineTo(start.x, bottomY); // Bottom Left
+                ctx.moveTo(centerX, topY); 
+                ctx.lineTo(end.x, bottomY);
+                ctx.lineTo(start.x, bottomY);
                 ctx.closePath();
             }
             break;
@@ -208,14 +205,12 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
                 const y1 = Math.min(start.y, end.y);
                 const y2 = Math.max(start.y, end.y);
                 const width = x2 - x1;
-                
-                // Indent top by 20% on each side
                 const indent = width * 0.2;
                 
-                ctx.moveTo(x1 + indent, y1); // Top Left
-                ctx.lineTo(x2 - indent, y1); // Top Right
-                ctx.lineTo(x2, y2);          // Bottom Right
-                ctx.lineTo(x1, y2);          // Bottom Left
+                ctx.moveTo(x1 + indent, y1);
+                ctx.lineTo(x2 - indent, y1);
+                ctx.lineTo(x2, y2);
+                ctx.lineTo(x1, y2);
                 ctx.closePath();
             }
             break;
@@ -358,7 +353,7 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
     return (
       <div 
         className="relative shadow-xl shadow-red-900/20 rounded-sm bg-white border-2 border-zinc-200 overflow-hidden"
-        style={{ width: 'fit-content', height: 'fit-content' }}
+        style={{ width: `${currentDisplayWidth}px`, height: `${currentDisplayHeight}px` }}
       >
         {/* Main Canvas */}
         <canvas
@@ -366,7 +361,7 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
             width={width}
             height={height}
             className="block touch-none"
-            style={{ width: `${width}px`, height: `${height}px` }}
+            style={{ width: `${currentDisplayWidth}px`, height: `${currentDisplayHeight}px` }}
             draggable={false}
             onContextMenu={(e) => e.preventDefault()}
         />
@@ -377,7 +372,7 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
             width={width}
             height={height}
             className="absolute inset-0 touch-none cursor-crosshair"
-            style={{ width: `${width}px`, height: `${height}px` }}
+            style={{ width: `${currentDisplayWidth}px`, height: `${currentDisplayHeight}px` }}
             draggable={false}
             onContextMenu={(e) => e.preventDefault()}
             onMouseDown={handleStart}
