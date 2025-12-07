@@ -15,8 +15,8 @@ import { TEXT } from './utils/i18n';
 const App = () => {
   const [phase, setPhase] = useState<'folding' | 'cutting'>('folding');
   
-  // Language State
-  const [language, setLanguage] = useState<Language>('en');
+  // Language State (Default: zh)
+  const [language, setLanguage] = useState<Language>('zh');
 
   // Cutting Tools State
   const [tool, setTool] = useState<DrawingTool>('brush');
@@ -50,7 +50,7 @@ const App = () => {
 
   // Interactive Guide State Sequence
   // FOLD: fold_up -> fold_right -> fold_br -> fold_finish
-  // CUT: cut_tool -> cut_canvas -> cut_preview -> cut_save
+  // CUT: cut_tool -> cut_canvas -> cut_thickness -> cut_shapes -> cut_preview -> cut_save -> cut_reset
   const [activeGuideStep, setActiveGuideStep] = useState<string | null>(null);
   
   // Track completion to ensure we don't show it every time
@@ -212,6 +212,7 @@ const App = () => {
     setPhase('folding');
     setIsAnimating(false);
     setAnimationData(null);
+    setActiveGuideStep(null);
     
     if (foldCanvasRef.current && simulationRef.current) {
         const ctx = foldCanvasRef.current.getContext('2d');
@@ -237,11 +238,21 @@ const App = () => {
         const texture = simulationRef.current.applyCutAndUnfold(cutCanvas, paperColor);
         setPreviewImage(texture);
         
-        // Advance Cut Guide from Canvas to Preview
+        // Advance Cut Guide from Canvas -> Thickness -> Shapes -> Preview
         if (activeGuideStep === 'cut_canvas') {
-            setActiveGuideStep('cut_preview');
+            setActiveGuideStep('cut_thickness');
         }
     }
+  };
+
+  const handleNextGuide = () => {
+      if (activeGuideStep === 'cut_thickness') {
+          setActiveGuideStep('cut_shapes');
+      } else if (activeGuideStep === 'cut_shapes') {
+          setActiveGuideStep('cut_preview');
+      } else if (activeGuideStep === 'cut_reset') {
+          setActiveGuideStep(null); // Finish
+      }
   };
 
   const getNameInfo = () => {
@@ -277,7 +288,11 @@ const App = () => {
   };
 
   const handleSaveResult = async () => {
-      setActiveGuideStep(null);
+      if (activeGuideStep === 'cut_save') {
+          setActiveGuideStep('cut_reset');
+      } else {
+          setActiveGuideStep(null);
+      }
 
       if (!simulationRef.current || !previewImage) return;
 
@@ -595,6 +610,7 @@ const App = () => {
                             themeColor={dynamicThemeColor}
                             language={language}
                             activeGuideStep={activeGuideStep}
+                            onNextGuide={handleNextGuide}
                         />
                     </div>
 

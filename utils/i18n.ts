@@ -51,10 +51,16 @@ export const TEXT = {
     guide_cut_tool_sub: "Currently using Freehand Brush",
     guide_cut_canvas: "Draw Here",
     guide_cut_canvas_sub: "Draw lines to cut the paper",
+    guide_cut_thickness: "Adjust Thickness",
+    guide_cut_thickness_sub: "Drag to change brush size",
+    guide_cut_shapes: "Use Shapes",
+    guide_cut_shapes_sub: "Try drawing with common shapes",
     guide_cut_preview: "Real-time Result",
     guide_cut_preview_sub: "See the unfolded pattern here",
     guide_cut_save: "Save Work",
     guide_cut_save_sub: "Download your masterpiece",
+    guide_cut_reset: "Start Over",
+    guide_cut_reset_sub: "Click here to start a new creation",
 
     // Settings Sidebar
     settingsTitle: "Settings",
@@ -143,10 +149,16 @@ export const TEXT = {
     guide_cut_tool_sub: "默认使用画笔，可自由绘制",
     guide_cut_canvas: "在此作图",
     guide_cut_canvas_sub: "在折叠区域绘制图案进行剪裁",
+    guide_cut_thickness: "调节粗细",
+    guide_cut_thickness_sub: "还可以拖动来调节笔触粗细",
+    guide_cut_shapes: "常见图形",
+    guide_cut_shapes_sub: "还可以使用常见图形哦",
     guide_cut_preview: "实时效果",
     guide_cut_preview_sub: "此处实时显示展开后的样子",
     guide_cut_save: "保存作品",
     guide_cut_save_sub: "点击此处保存你的作品",
+    guide_cut_reset: "重新开始",
+    guide_cut_reset_sub: "可以点击此处重新开始哦",
     
     // Settings Sidebar
     settingsTitle: "设置",

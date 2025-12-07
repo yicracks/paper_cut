@@ -18,6 +18,7 @@ interface ControlsProps {
   themeColor?: string;
   language: Language;
   activeGuideStep?: string | null;
+  onNextGuide?: () => void;
 }
 
 const Controls: React.FC<ControlsProps> = ({
@@ -30,7 +31,8 @@ const Controls: React.FC<ControlsProps> = ({
   onClear,
   themeColor,
   language,
-  activeGuideStep
+  activeGuideStep,
+  onNextGuide
 }) => {
   const t = TEXT[language];
   
@@ -60,6 +62,25 @@ const Controls: React.FC<ControlsProps> = ({
         </div>
       );
   };
+
+  const GuidePopup = ({ title, sub, onClick }: { title: string, sub: string, onClick?: () => void }) => (
+      <div 
+        className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-36 bg-red-600 text-white text-xs p-2 rounded-lg shadow-xl text-center cursor-pointer animate-in fade-in slide-in-from-bottom-2 z-50"
+        onClick={onClick}
+      >
+        <div className="font-bold mb-0.5">{title}</div>
+        <div className="opacity-90 text-[10px]">{sub}</div>
+        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-600 rotate-45"></div>
+      </div>
+  );
+
+  const GuideRing = () => (
+      <div className="absolute inset-0 -m-1 border-4 border-red-500 rounded-xl animate-pulse pointer-events-none z-40"></div>
+  );
+
+  const isThicknessGuide = activeGuideStep === 'cut_thickness';
+  const isShapesGuide = activeGuideStep === 'cut_shapes';
+  const isResetGuide = activeGuideStep === 'cut_reset';
 
   return (
     <div className="flex flex-col gap-4 w-full p-4 bg-white rounded-xl shadow-lg border border-zinc-100">
@@ -92,7 +113,7 @@ const Controls: React.FC<ControlsProps> = ({
             </div>
 
             {/* Row 1: Draw Tools + Slider */}
-            <div className="flex items-center gap-3 bg-zinc-50 p-1.5 rounded-xl border border-zinc-100">
+            <div className="flex items-center gap-3 bg-zinc-50 p-1.5 rounded-xl border border-zinc-100 relative">
                 <ToolButton t="brush" icon={Brush} />
                 <ToolButton t="line" icon={Minus} />
                 <ToolButton t="arc" customIcon={
@@ -104,7 +125,7 @@ const Controls: React.FC<ControlsProps> = ({
                 <div className="w-px h-6 bg-zinc-200 mx-1"></div>
 
                  {/* Size Slider */}
-                <div className="flex items-center gap-2 flex-1 px-1">
+                <div className="flex items-center gap-2 flex-1 px-1 relative">
                     <div className="w-1.5 h-1.5 rounded-full bg-zinc-300"></div>
                     <input
                         type="range"
@@ -117,11 +138,20 @@ const Controls: React.FC<ControlsProps> = ({
                         title={t.thickness}
                     />
                     <div className="w-3 h-3 rounded-full bg-zinc-300"></div>
+
+                    {isThicknessGuide && <GuideRing />}
+                    {isThicknessGuide && (
+                        <GuidePopup 
+                            title={t.guide_cut_thickness} 
+                            sub={t.guide_cut_thickness_sub} 
+                            onClick={onNextGuide} 
+                        />
+                    )}
                 </div>
             </div>
 
             {/* Row 2: Shapes */}
-            <div className="flex justify-between bg-zinc-50 p-1.5 rounded-xl border border-zinc-100">
+            <div className="flex justify-between bg-zinc-50 p-1.5 rounded-xl border border-zinc-100 relative">
                 <ToolButton t="square" customIcon={<Square size={20} />} />
                 <ToolButton t="rect" customIcon={
                     <div className="w-5 h-3.5 border-2 border-current rounded-sm"></div>
@@ -137,11 +167,20 @@ const Controls: React.FC<ControlsProps> = ({
                     </svg>
                 } />
                 <ToolButton t="star" icon={Star} />
+
+                {isShapesGuide && <GuideRing />}
+                {isShapesGuide && (
+                    <GuidePopup 
+                        title={t.guide_cut_shapes} 
+                        sub={t.guide_cut_shapes_sub} 
+                        onClick={onNextGuide} 
+                    />
+                )}
             </div>
         </div>
 
       {/* Footer Actions: Reset */}
-      <div className="pt-2 border-t border-zinc-100">
+      <div className="pt-2 border-t border-zinc-100 relative">
             <button
               onClick={onClear}
               className="w-full py-2 rounded-xl bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-red-600 transition-all flex items-center justify-center gap-2 font-medium"
@@ -150,6 +189,16 @@ const Controls: React.FC<ControlsProps> = ({
               <RotateCcw size={18} />
               {t.startOver}
             </button>
+            {isResetGuide && (
+                <>
+                    <GuideRing />
+                    <GuidePopup 
+                        title={t.guide_cut_reset} 
+                        sub={t.guide_cut_reset_sub} 
+                        onClick={() => onNextGuide?.()} 
+                    />
+                </>
+            )}
       </div>
     </div>
   );
