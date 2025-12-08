@@ -299,13 +299,13 @@ export class PaperSimulation implements SimulationEngine {
     ctx.putImageData(imgData, 0, 0);
   }
 
-  public applyCutAndUnfold(userCutCanvas: HTMLCanvasElement, color: string): string {
+  public applyCutAndUnfold(userCutCanvas: HTMLCanvasElement, color: string, targetCanvas?: HTMLCanvasElement): string | void {
     // Reset cut state because this is a fresh application of the current canvas state.
     // This allows undo operations (restoring pixels) to be correctly processed.
     this.originalPixelsState.fill(1);
 
     const ctx = userCutCanvas.getContext('2d');
-    if (!ctx) return '';
+    if (!ctx) return targetCanvas ? undefined : '';
     
     // The cutCanvas should be full size
     const cutW = userCutCanvas.width;
@@ -330,15 +330,18 @@ export class PaperSimulation implements SimulationEngine {
        }
     }
     
-    return this.generateFinalImage(color);
+    if (targetCanvas) {
+        this.renderToCanvas(targetCanvas, color);
+    } else {
+        return this.generateFinalImage(color);
+    }
   }
 
-  private generateFinalImage(color: string): string {
-      const canvas = document.createElement('canvas');
+  private renderToCanvas(canvas: HTMLCanvasElement, color: string) {
       canvas.width = this.size;
       canvas.height = this.size;
       const ctx = canvas.getContext('2d');
-      if(!ctx) return '';
+      if(!ctx) return;
       
       const imgData = ctx.createImageData(this.size, this.size);
       const data = imgData.data;
@@ -355,6 +358,11 @@ export class PaperSimulation implements SimulationEngine {
       }
       
       ctx.putImageData(imgData, 0, 0);
+  }
+
+  private generateFinalImage(color: string): string {
+      const canvas = document.createElement('canvas');
+      this.renderToCanvas(canvas, color);
       return canvas.toDataURL();
   }
 

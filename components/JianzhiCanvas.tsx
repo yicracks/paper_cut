@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { fillCanvas, getCoordinates, removeDisconnectedParts } from '../utils/canvasUtils';
 import { DrawingTool, Point } from '../types';
@@ -59,7 +60,10 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
         const ctx = canvas?.getContext('2d');
         if (canvas && ctx) {
           saveToHistory();
-          // Reset logic: use onInit if available, otherwise fill red
+          // IMPORTANT: Reset composite operation to source-over so we can draw the fresh paper shape
+          // If we are in 'destination-out' (eraser) mode, drawing a new shape on a cleared (transparent) canvas does nothing.
+          ctx.globalCompositeOperation = 'source-over';
+          
           if (onInit) {
              onInit(ctx);
           } else {
@@ -106,6 +110,7 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
       const ctx = canvas?.getContext('2d');
       if (canvas && ctx) {
         if (historyStack.current.length === 0) {
+           ctx.globalCompositeOperation = 'source-over';
            if (onInit) {
              onInit(ctx);
            } else {
@@ -268,9 +273,14 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
         const ctx = canvas.getContext('2d');
         if(ctx) {
              ctx.beginPath();
-             ctx.arc(coords.x, coords.y, brushSize / 2, 0, Math.PI * 2);
+             ctx.lineCap = 'round';
+             ctx.lineJoin = 'round';
+             ctx.lineWidth = brushSize;
              ctx.globalCompositeOperation = 'destination-out';
-             ctx.fillStyle = 'black';
+             ctx.fillStyle = 'black'; // Color doesn't matter for destination-out, but needed for fill
+             
+             // Draw a single dot
+             ctx.arc(coords.x, coords.y, brushSize / 2, 0, Math.PI * 2);
              ctx.fill();
         }
       }

@@ -36,6 +36,9 @@ export class PresetSimulation implements SimulationEngine {
     
     const cx = canvas.width / 2;
     const cy = canvas.height / 2;
+    
+    // Ensure radius adapts if canvas size is different from sim size
+    const effectiveRadius = Math.min(cx, cy) * 0.95;
 
     ctx.save();
     ctx.translate(cx, cy);
@@ -47,7 +50,7 @@ export class PresetSimulation implements SimulationEngine {
     ctx.moveTo(0, 0);
     // We draw a wedge of 'anglePerSegment' size.
     // To make it symmetric for drawing, we center it.
-    ctx.arc(0, 0, this.radius, -this.anglePerSegment/2, this.anglePerSegment/2);
+    ctx.arc(0, 0, effectiveRadius, -this.anglePerSegment/2, this.anglePerSegment/2);
     ctx.lineTo(0, 0);
     ctx.closePath();
     
@@ -71,10 +74,14 @@ export class PresetSimulation implements SimulationEngine {
     const width = ctx.canvas.width;
     const height = ctx.canvas.height;
     
+    // Ensure we start clean
     ctx.clearRect(0, 0, width, height);
 
     const cx = width / 2;
     const cy = height / 2;
+    
+    // Dynamically calculate radius based on actual context dimensions
+    const effectiveRadius = Math.min(cx, cy) * 0.95;
 
     ctx.save();
     ctx.translate(cx, cy);
@@ -82,7 +89,8 @@ export class PresetSimulation implements SimulationEngine {
 
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.arc(0, 0, this.radius, -this.anglePerSegment/2, this.anglePerSegment/2);
+    // Use the actual anglePerSegment from constructor, as it is consistent
+    ctx.arc(0, 0, effectiveRadius, -this.anglePerSegment/2, this.anglePerSegment/2);
     ctx.lineTo(0, 0);
     ctx.closePath();
     
@@ -94,14 +102,19 @@ export class PresetSimulation implements SimulationEngine {
   }
 
   /**
-   * Internal helper to generate the unfolded result on a fresh canvas.
+   * Internal helper to generate the unfolded result on a fresh canvas or target canvas.
    */
-  private generateUnfoldedCanvas(userCutCanvas: HTMLCanvasElement): HTMLCanvasElement {
-    const outputCanvas = document.createElement('canvas');
+  private generateUnfoldedCanvas(userCutCanvas: HTMLCanvasElement, targetCanvas?: HTMLCanvasElement): HTMLCanvasElement {
+    const outputCanvas = targetCanvas || document.createElement('canvas');
+    // Ensure size matches if passed in, or set defaults
     outputCanvas.width = this.size;
     outputCanvas.height = this.size;
+    
     const ctx = outputCanvas.getContext('2d');
     if (!ctx) return outputCanvas;
+
+    // Clear it first
+    ctx.clearRect(0, 0, this.size, this.size);
 
     const cx = this.size / 2;
     const cy = this.size / 2;
@@ -116,24 +129,12 @@ export class PresetSimulation implements SimulationEngine {
         ctx.rotate(i * this.anglePerSegment);
         
         // If odd, we need to mirror.
-        // Mirroring across the X-axis (scale -1, 1) flips left/right relative to the segment.
-        // Since the wedge is centered at -90 (Up) in the source, and we rotate the CONTEXT,
-        // we must be careful.
-        // 
-        // Logic:
-        // i=0 (Even): Rotate 0. Source is at -90. Draws at -90. (Top Wedge)
-        // i=1 (Odd): Rotate 36. Scale(-1, 1). 
-        //    Scale(-1, 1) flips across Vertical Axis (relative to screen if rot=0).
-        //    Since Source is UP (along Y axis, negative), Scale(-1, 1) flips X coords.
-        //    The wedge is symmetric across Y, so the shape is mirrored horizontally.
-        //    This creates the correct "Book Match" effect.
         if (i % 2 !== 0) {
            ctx.scale(-1, 1); 
         }
         
         // Draw the source.
         // The source wedge is already centered at -PI/2 (Up) in the coordinate space.
-        // We draw it directly. No extra rotation needed.
         ctx.drawImage(userCutCanvas, -cx, -cy);
         
         ctx.restore();
@@ -144,9 +145,14 @@ export class PresetSimulation implements SimulationEngine {
   /**
    * Generates the unfolded pattern by rotating and mirroring the cut wedge.
    */
-  public applyCutAndUnfold(userCutCanvas: HTMLCanvasElement, color: string): string {
-    const canvas = this.generateUnfoldedCanvas(userCutCanvas);
-    return canvas.toDataURL();
+  public applyCutAndUnfold(userCutCanvas: HTMLCanvasElement, color: string, targetCanvas?: HTMLCanvasElement): string | void {
+    if (targetCanvas) {
+        this.generateUnfoldedCanvas(userCutCanvas, targetCanvas);
+        return;
+    } else {
+        const canvas = this.generateUnfoldedCanvas(userCutCanvas);
+        return canvas.toDataURL();
+    }
   }
 
   /**

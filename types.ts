@@ -37,7 +37,8 @@ export interface SimulationEngine {
     fold(dir: FoldDirection): boolean;
     renderFoldedState(canvas: HTMLCanvasElement, color: string): void;
     renderActiveCutState(ctx: CanvasRenderingContext2D, color: string): void;
-    applyCutAndUnfold(cutCanvas: HTMLCanvasElement, color: string): string;
+    // Updated to accept optional targetCanvas for performance
+    applyCutAndUnfold(cutCanvas: HTMLCanvasElement, color: string, targetCanvas?: HTMLCanvasElement): string | void;
     generateCreaseOverlay(cutCanvas?: HTMLCanvasElement, color?: string): string;
 }
 
@@ -52,6 +53,7 @@ export interface GalleryItem {
 
 export interface AppSettings {
   dynamicTheme: boolean;
+  disableResetWarning?: boolean;
 }
 
 export type Language = 'en' | 'zh';
