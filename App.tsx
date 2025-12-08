@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Scissors, Settings, Languages, Download, ArrowRight, AlertTriangle } from 'lucide-react';
+import { Scissors, Settings, Languages, Download, ArrowRight, AlertTriangle, SlidersHorizontal, X, RotateCcw, Undo2, Redo2 } from 'lucide-react';
 import JianzhiCanvas, { JianzhiCanvasHandle } from './components/JianzhiCanvas';
 import Controls from './components/Controls';
 import FoldingControls from './components/FoldingControls';
@@ -10,7 +10,7 @@ import { PresetSimulation } from './utils/presetSimulation';
 import { DrawingTool, FoldDirection, FoldingMode, SimulationEngine, AppSettings, Language } from './types';
 import { saveToGallery } from './utils/db';
 import { TEXT } from './utils/i18n';
-import { SIM_SIZE, DISPLAY_MARGIN, DEFAULT_BRUSH_SIZE, DEFAULT_PAPER_COLOR } from './constants';
+import { SIM_SIZE, DISPLAY_MARGIN, DEFAULT_BRUSH_SIZE, DEFAULT_PAPER_COLOR } from './utils/constants';
 
 // Hook for responsive display size
 const useDisplaySize = (baseSize: number, margin: number = DISPLAY_MARGIN) => {
@@ -57,6 +57,9 @@ const App = () => {
     dynamicTheme: false,
     disableResetWarning: false
   });
+
+  // UI State
+  const [showCuttingSettings, setShowCuttingSettings] = useState(false);
 
   // Reset Warning State
   const [pendingResetAction, setPendingResetAction] = useState<(() => void) | null>(null);
@@ -304,49 +307,88 @@ const App = () => {
       </header>
 
       <main className="max-w-[1400px] mx-auto mt-6 px-2 md:px-4">
-        {/* Main 3-Column Layout with Top Alignment */}
+        {/* Main Layout: Cut Canvas (Center) + Preview (Right) */}
         <div className="flex flex-col xl:flex-row items-start justify-center gap-6">
             
-            {/* COLUMN 1: Folding Controls + Tools */}
-            <div className="w-full xl:w-auto xl:sticky xl:top-24 flex flex-col gap-4">
-                 <div className="w-full max-w-[500px] xl:w-[280px] mx-auto flex flex-col gap-4">
-                    <FoldingControls 
-                        mode={mode}
-                        onModeChange={handleModeChange}
-                        onFold={handleFold}
-                        canFold={canFold}
-                        onPresetSelect={handlePresetSelect}
-                        selectedPreset={selectedPreset}
-                        onReset={handleResetPaper}
-                        foldCount={foldCount}
-                        maxFolds={MAX_FOLDS}
-                        paperColor={paperColor}
-                        onColorChange={setPaperColor}
-                        themeColor={dynamicThemeColor}
-                        language={language}
-                   />
-                   
-                   <Controls 
-                        tool={tool}
-                        onToolChange={setTool}
-                        brushSize={brushSize}
-                        onBrushSizeChange={setBrushSize}
-                        onUndo={() => { canvasRef.current?.undo(); updatePreview(); }}
-                        onRedo={() => { canvasRef.current?.redo(); updatePreview(); }}
-                        onClear={handleResetPaper}
-                        themeColor={dynamicThemeColor}
-                        language={language}
-                    />
-                 </div>
-            </div>
-
-            {/* COLUMN 2: Drawing Canvas */}
+            {/* COLUMN 1: Drawing Canvas + Overlay Controls */}
             <div className="flex flex-col gap-4 items-center w-full xl:w-auto">
                  <div className="flex items-center justify-between w-full max-w-[500px] px-2 border-b border-[#d4c4b0] pb-1">
                      <span className="text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">{t.step_cut}</span>
                 </div>
                 
                 <div className="relative inline-block p-4 bg-white border border-[#d4c4b0] shadow-md z-10 chinese-card">
+                    {/* Settings Toggle Button */}
+                    <button
+                        onClick={() => setShowCuttingSettings(!showCuttingSettings)}
+                        className="absolute top-2 left-2 z-30 p-1.5 bg-white/90 border border-[#d4c4b0] rounded-sm text-[#8c7b6c] hover:text-[#C23531] hover:border-[#C23531] shadow-sm transition-all"
+                        title={t.cuttingSettings}
+                    >
+                        <SlidersHorizontal size={16} />
+                    </button>
+
+                    {/* History Actions (Top Right of Canvas) */}
+                    <div className="absolute top-2 right-2 z-30 flex gap-1">
+                        <button
+                            onClick={() => { canvasRef.current?.undo(); updatePreview(); }}
+                            className="p-1.5 bg-white/90 border border-[#d4c4b0] rounded-sm text-[#8c7b6c] hover:text-[#C23531] hover:border-[#C23531] shadow-sm transition-all"
+                            title={t.undo}
+                        >
+                            <Undo2 size={16} />
+                        </button>
+                        <button
+                            onClick={() => { canvasRef.current?.redo(); updatePreview(); }}
+                            className="p-1.5 bg-white/90 border border-[#d4c4b0] rounded-sm text-[#8c7b6c] hover:text-[#C23531] hover:border-[#C23531] shadow-sm transition-all"
+                            title={t.redo}
+                        >
+                            <Redo2 size={16} />
+                        </button>
+                        <button
+                            onClick={handleResetPaper}
+                            className="p-1.5 bg-white/90 border border-[#d4c4b0] rounded-sm text-[#8c7b6c] hover:text-[#C23531] hover:border-[#C23531] shadow-sm transition-all ml-1"
+                            title={t.startOver}
+                        >
+                            <RotateCcw size={16} />
+                        </button>
+                    </div>
+
+                    {/* Settings Overlay Panel - Small, Compact, Transparent */}
+                    {showCuttingSettings && (
+                        <div className="absolute top-10 left-2 w-48 z-20 bg-white/15 backdrop-blur-[1px] border border-white/30 shadow-lg p-2 rounded-sm overflow-y-auto max-h-[85%] animate-in fade-in duration-200">
+                             <div className="flex justify-between items-center mb-2 pb-1 border-b border-white/20">
+                                <h3 className="text-[10px] font-bold text-[#5c5c5c] uppercase tracking-wide">{t.cuttingSettings}</h3>
+                                <button onClick={() => setShowCuttingSettings(false)} className="text-[#8c7b6c] hover:text-[#C23531]">
+                                    <X size={14} />
+                                </button>
+                             </div>
+                             
+                             <div className="flex flex-col gap-2">
+                                <FoldingControls 
+                                    mode={mode}
+                                    onModeChange={handleModeChange}
+                                    onFold={handleFold}
+                                    canFold={canFold}
+                                    onPresetSelect={handlePresetSelect}
+                                    selectedPreset={selectedPreset}
+                                    onReset={handleResetPaper}
+                                    foldCount={foldCount}
+                                    maxFolds={MAX_FOLDS}
+                                    paperColor={paperColor}
+                                    onColorChange={setPaperColor}
+                                    themeColor={dynamicThemeColor}
+                                    language={language}
+                                />
+                                <Controls 
+                                    tool={tool}
+                                    onToolChange={setTool}
+                                    brushSize={brushSize}
+                                    onBrushSizeChange={setBrushSize}
+                                    themeColor={dynamicThemeColor}
+                                    language={language}
+                                />
+                             </div>
+                        </div>
+                    )}
+
                     <JianzhiCanvas
                         ref={canvasRef}
                         width={SIM_SIZE}
@@ -379,7 +421,7 @@ const App = () => {
                 <ArrowRight size={32} />
             </div>
 
-            {/* COLUMN 3: Preview */}
+            {/* COLUMN 2: Preview */}
             <div className="flex flex-col gap-4 items-center xl:sticky xl:top-24 w-full xl:w-auto">
                  <div className="flex items-center justify-between w-full max-w-[500px] px-2 border-b border-[#d4c4b0] pb-1">
                      <span className="text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">PREVIEW</span>

@@ -16,6 +16,7 @@ export const TEXT = {
     download: "Download",
     savePattern: "Save Mode",
     saveResult: "Save Result",
+    cuttingSettings: "Cutting Settings",
     
     // Folding
     freeFold: "Free Fold",
@@ -91,6 +92,7 @@ export const TEXT = {
     download: "下载保存",
     savePattern: "保存模式",
     saveResult: "保存展开图",
+    cuttingSettings: "剪裁设定",
     
     // Folding
     freeFold: "自由折叠",
