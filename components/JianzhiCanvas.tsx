@@ -2,6 +2,7 @@
 import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { fillCanvas, getCoordinates, removeDisconnectedParts } from '../utils/canvasUtils';
 import { DrawingTool, Point } from '../types';
+import { DEFAULT_BRUSH_SIZE } from '../utils/constants';
 
 interface JianzhiCanvasProps {
   width: number;
@@ -17,6 +18,7 @@ interface JianzhiCanvasProps {
 export interface JianzhiCanvasHandle {
   getCanvas: () => HTMLCanvasElement | null;
   clear: () => void;
+  hardReset: () => void; // Clears canvas AND history
   undo: () => void;
   redo: () => void;
   saveState: () => void;
@@ -53,6 +55,15 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
       }
     };
 
+    const initializeCanvas = (ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number) => {
+        ctx.globalCompositeOperation = 'source-over';
+        if (onInit) {
+             onInit(ctx);
+        } else {
+             fillCanvas(ctx, canvasWidth, canvasHeight, '#DC2626');
+        }
+    };
+
     useImperativeHandle(ref, () => ({
       getCanvas: () => canvasRef.current,
       clear: () => {
@@ -60,15 +71,22 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
         const ctx = canvas?.getContext('2d');
         if (canvas && ctx) {
           saveToHistory();
-          // IMPORTANT: Reset composite operation to source-over so we can draw the fresh paper shape
-          // If we are in 'destination-out' (eraser) mode, drawing a new shape on a cleared (transparent) canvas does nothing.
-          ctx.globalCompositeOperation = 'source-over';
-          
-          if (onInit) {
-             onInit(ctx);
-          } else {
-             fillCanvas(ctx, canvas.width, canvas.height, '#DC2626');
-          }
+          initializeCanvas(ctx, canvas.width, canvas.height);
+        }
+      },
+      hardReset: () => {
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (canvas && ctx) {
+            // Wipe stacks
+            historyStack.current = [];
+            redoStack.current = [];
+            
+            // Re-init
+            initializeCanvas(ctx, canvas.width, canvas.height);
+            
+            // Set baseline history
+            historyStack.current.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
         }
       },
       undo: () => {
@@ -110,12 +128,7 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
       const ctx = canvas?.getContext('2d');
       if (canvas && ctx) {
         if (historyStack.current.length === 0) {
-           ctx.globalCompositeOperation = 'source-over';
-           if (onInit) {
-             onInit(ctx);
-           } else {
-             fillCanvas(ctx, width, height, '#DC2626');
-           }
+           initializeCanvas(ctx, width, height);
            historyStack.current.push(ctx.getImageData(0, 0, width, height));
         }
       }

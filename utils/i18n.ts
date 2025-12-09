@@ -8,19 +8,18 @@ export const TEXT = {
     step_cut: "cut",
     
     // Controls
-    tools: "Tools",
     undo: "Undo",
     redo: "Redo",
-    thickness: "Line Thickness",
     startOver: "Start Over",
     download: "Download",
     savePattern: "Save Mode",
     saveResult: "Save Result",
-    cuttingSettings: "Cutting Settings",
+    cuttingSettings: "Folding Settings",
+    previewTitle: "PREVIEW",
     
     // Folding
     freeFold: "Free Fold",
-    presetPatterns: "Preset Patterns",
+    presetPatterns: "Preset Folding",
     resetPaper: "Reset Paper",
     startCutting: "Start Cutting",
     fold_TL: "Top-Left",
@@ -84,19 +83,18 @@ export const TEXT = {
     step_cut: "剪裁",
     
     // Controls
-    tools: "工具栏",
     undo: "撤回",
     redo: "重做",
-    thickness: "线条粗细",
     startOver: "重新开始",
     download: "下载保存",
     savePattern: "保存模式",
     saveResult: "保存展开图",
-    cuttingSettings: "剪裁设定",
+    cuttingSettings: "折叠设定",
+    previewTitle: "展示",
     
     // Folding
     freeFold: "自由折叠",
-    presetPatterns: "预设图案",
+    presetPatterns: "预设折叠",
     resetPaper: "重置纸张",
     startCutting: "开始剪裁",
     fold_TL: "左上",

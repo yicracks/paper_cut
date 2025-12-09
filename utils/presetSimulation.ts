@@ -16,7 +16,8 @@ export class PresetSimulation implements SimulationEngine {
     // A 5-fold pattern has 5 axes of symmetry, creating 10 wedges.
     this.totalSegments = folds * 2;
     this.anglePerSegment = (Math.PI * 2) / this.totalSegments;
-    this.radius = (size / 2) * 0.95; // Slightly smaller than canvas half
+    // Reduce radius to 80% to ensure there is empty space between paper edge and canvas container
+    this.radius = (size / 2) * 0.8; 
   }
 
   // Preset mode doesn't support step-by-step folding
@@ -38,7 +39,8 @@ export class PresetSimulation implements SimulationEngine {
     const cy = canvas.height / 2;
     
     // Ensure radius adapts if canvas size is different from sim size
-    const effectiveRadius = Math.min(cx, cy) * 0.95;
+    // Use 0.8 factor here too for consistency if canvas resizes
+    const effectiveRadius = Math.min(cx, cy) * 0.8;
 
     ctx.save();
     ctx.translate(cx, cy);
@@ -81,7 +83,7 @@ export class PresetSimulation implements SimulationEngine {
     const cy = height / 2;
     
     // Dynamically calculate radius based on actual context dimensions
-    const effectiveRadius = Math.min(cx, cy) * 0.95;
+    const effectiveRadius = Math.min(cx, cy) * 0.8;
 
     ctx.save();
     ctx.translate(cx, cy);

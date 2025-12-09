@@ -2,12 +2,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Scissors, Settings, Languages, Download, ArrowRight, AlertTriangle, SlidersHorizontal, X, RotateCcw, Undo2, Redo2 } from 'lucide-react';
 import JianzhiCanvas, { JianzhiCanvasHandle } from './components/JianzhiCanvas';
-import Controls from './components/Controls';
 import FoldingControls from './components/FoldingControls';
 import SettingsModal from './components/SettingsModal';
 import { PaperSimulation } from './utils/simulationUtils';
 import { PresetSimulation } from './utils/presetSimulation';
-import { DrawingTool, FoldDirection, FoldingMode, SimulationEngine, AppSettings, Language } from './types';
+import { FoldDirection, FoldingMode, SimulationEngine, AppSettings, Language } from './types';
 import { saveToGallery } from './utils/db';
 import { TEXT } from './utils/i18n';
 import { SIM_SIZE, DISPLAY_MARGIN, DEFAULT_BRUSH_SIZE, DEFAULT_PAPER_COLOR } from './utils/constants';
@@ -37,10 +36,6 @@ const useDisplaySize = (baseSize: number, margin: number = DISPLAY_MARGIN) => {
 const App = () => {
   // Language State (Default: zh)
   const [language, setLanguage] = useState<Language>('zh');
-
-  // Cutting Tools State
-  const [tool, setTool] = useState<DrawingTool>('brush');
-  const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
   
   // Folding State - Default to 'preset'
   const [mode, setMode] = useState<FoldingMode>('preset');
@@ -126,8 +121,8 @@ const App = () => {
         } else {
             simulationRef.current = new PresetSimulation(SIM_SIZE, selectedPreset);
         }
-        // Reset the canvas (clears user cuts) and redraws the new paper shape
-        canvasRef.current?.clear();
+        // Reset the canvas AND wipe undo history because the fold basis has changed
+        canvasRef.current?.hardReset();
       });
   };
 
@@ -139,12 +134,12 @@ const App = () => {
         setSelectedPreset(preset);
         if (mode === 'preset') {
             simulationRef.current = new PresetSimulation(SIM_SIZE, preset);
-            canvasRef.current?.clear();
+            canvasRef.current?.hardReset();
         } else {
             // Switching from Custom to Preset implicitly
              setMode('preset');
              simulationRef.current = new PresetSimulation(SIM_SIZE, preset);
-             canvasRef.current?.clear();
+             canvasRef.current?.hardReset();
         }
       });
   };
@@ -164,13 +159,20 @@ const App = () => {
     if (simulationRef.current.fold(dir)) {
         setFoldCount(prev => prev + 1);
         setFoldSequence(prev => [...prev, dir]);
-        // Reset canvas to show new smaller folded shape
-        canvasRef.current?.clear();
+        // Reset canvas (keeping history wouldn't make sense as shape changed)
+        canvasRef.current?.hardReset();
     }
   };
 
-  // Reset everything to start over
-  const handleResetPaper = () => {
+  // "Start Over" in CUT area: Reset cuts but keep current fold sequence/mode
+  const handleResetCuts = () => {
+     // No confirmation prompt for resetting cuts within the same mode
+     canvasRef.current?.hardReset();
+     updatePreview();
+  };
+
+  // "Reset Paper" in FOLD area: Reset everything to flat paper
+  const handleResetFolds = () => {
     requestReset(() => {
         if (mode === 'custom') {
             simulationRef.current = new PaperSimulation(SIM_SIZE);
@@ -179,7 +181,7 @@ const App = () => {
         } else {
             simulationRef.current = new PresetSimulation(SIM_SIZE, selectedPreset);
         }
-        canvasRef.current?.clear();
+        canvasRef.current?.hardReset();
     });
   };
 
@@ -343,7 +345,7 @@ const App = () => {
                             <Redo2 size={16} />
                         </button>
                         <button
-                            onClick={handleResetPaper}
+                            onClick={handleResetCuts}
                             className="p-1.5 bg-white/90 border border-[#d4c4b0] rounded-sm text-[#8c7b6c] hover:text-[#C23531] hover:border-[#C23531] shadow-sm transition-all ml-1"
                             title={t.startOver}
                         >
@@ -369,19 +371,11 @@ const App = () => {
                                     canFold={canFold}
                                     onPresetSelect={handlePresetSelect}
                                     selectedPreset={selectedPreset}
-                                    onReset={handleResetPaper}
+                                    onReset={handleResetFolds}
                                     foldCount={foldCount}
                                     maxFolds={MAX_FOLDS}
                                     paperColor={paperColor}
                                     onColorChange={setPaperColor}
-                                    themeColor={dynamicThemeColor}
-                                    language={language}
-                                />
-                                <Controls 
-                                    tool={tool}
-                                    onToolChange={setTool}
-                                    brushSize={brushSize}
-                                    onBrushSizeChange={setBrushSize}
                                     themeColor={dynamicThemeColor}
                                     language={language}
                                 />
@@ -394,8 +388,8 @@ const App = () => {
                         width={SIM_SIZE}
                         height={SIM_SIZE}
                         displaySize={displaySize}
-                        tool={tool}
-                        brushSize={brushSize}
+                        tool={'brush'}
+                        brushSize={DEFAULT_BRUSH_SIZE}
                         onInit={initCutCanvas}
                         onInteractEnd={updatePreview} 
                         onInteractStart={() => {}}
@@ -405,12 +399,12 @@ const App = () => {
                 <div className="relative w-full max-w-[500px]">
                     <button 
                         onClick={handleSaveCut}
-                        className={`w-full py-3 rounded-sm font-serif font-bold transition-all flex items-center justify-center gap-2 text-white shadow-md border border-[#a02622] btn-seal ${
+                        className={`w-full py-3 rounded-sm font-serif font-bold transition-all flex items-center justify-center gap-2 text-white shadow-lg border-2 border-[#a02622] btn-seal ${
                             dynamicThemeColor ? '' : 'bg-[#C23531] hover:bg-[#b91c1c]'
                         }`}
                         style={dynamicThemeColor ? { backgroundColor: dynamicThemeColor } : {}}
                     >
-                        <Download size={18} />
+                        <Download size={24} />
                         {t.savePattern}
                     </button>
                  </div>
@@ -424,7 +418,7 @@ const App = () => {
             {/* COLUMN 2: Preview */}
             <div className="flex flex-col gap-4 items-center xl:sticky xl:top-24 w-full xl:w-auto">
                  <div className="flex items-center justify-between w-full max-w-[500px] px-2 border-b border-[#d4c4b0] pb-1">
-                     <span className="text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">PREVIEW</span>
+                     <span className="text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">{t.previewTitle}</span>
                  </div>
                  
                  <div className="relative p-4 bg-white border border-[#d4c4b0] shadow-md flex items-center justify-center overflow-hidden chinese-card inline-block">
