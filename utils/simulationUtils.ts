@@ -24,22 +24,18 @@ export class PaperSimulation implements SimulationEngine {
     this.originalPixelsState = new Int8Array(size * size).fill(1);
     this.creasePixels = new Map();
     
-    // Initialize: Create paper centered in the canvas with small padding
-    // Reduced padding to 5% to make the paper larger, matching preview scale better
-    const padding = Math.floor(size * 0.05); 
-    
-    for (let y = padding; y < size - padding; y++) {
-      for (let x = padding; x < size - padding; x++) {
+    // Initialize: Every pixel maps to itself
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
         const idx = y * size + x;
         this.pixelMap.set(idx, [idx]);
       }
     }
 
-    this.minX = padding;
-    this.maxX = size - padding;
-    this.minY = padding;
-    this.maxY = size - padding;
-    // Bounds will be refined by updateBounds, but this is a good start
+    this.minX = 0;
+    this.maxX = size;
+    this.minY = 0;
+    this.maxY = size;
     this.updateBounds();
   }
 

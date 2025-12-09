@@ -399,12 +399,12 @@ const App = () => {
                 <div className="relative w-full max-w-[500px]">
                     <button 
                         onClick={handleSaveCut}
-                        className={`w-full py-3 rounded-sm font-serif font-bold transition-all flex items-center justify-center gap-2 text-white shadow-lg border-2 border-[#a02622] btn-seal ${
+                        className={`w-full py-3 rounded-sm font-serif font-bold transition-all flex items-center justify-center gap-2 text-white shadow-md border border-[#a02622] btn-seal ${
                             dynamicThemeColor ? '' : 'bg-[#C23531] hover:bg-[#b91c1c]'
                         }`}
                         style={dynamicThemeColor ? { backgroundColor: dynamicThemeColor } : {}}
                     >
-                        <Download size={24} />
+                        <Download size={18} />
                         {t.savePattern}
                     </button>
                  </div>
@@ -418,7 +418,7 @@ const App = () => {
             {/* COLUMN 2: Preview */}
             <div className="flex flex-col gap-4 items-center xl:sticky xl:top-24 w-full xl:w-auto">
                  <div className="flex items-center justify-between w-full max-w-[500px] px-2 border-b border-[#d4c4b0] pb-1">
-                     <span className="text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">{t.previewTitle}</span>
+                     <span className="text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">{t.step_show}</span>
                  </div>
                  
                  <div className="relative p-4 bg-white border border-[#d4c4b0] shadow-md flex items-center justify-center overflow-hidden chinese-card inline-block">

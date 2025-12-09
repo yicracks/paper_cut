@@ -267,8 +267,11 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
       ctx.stroke();
     };
 
-    const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
+    const handleStart = (e: React.PointerEvent) => {
       e.preventDefault(); 
+      // Capture the pointer so we keep receiving events even if dragged outside
+      e.currentTarget.setPointerCapture(e.pointerId);
+
       const canvas = canvasRef.current;
       if (!canvas) return;
       
@@ -299,7 +302,7 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
       }
     };
 
-    const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
+    const handleMove = (e: React.PointerEvent) => {
       e.preventDefault();
       if (!isDrawing || !startPoint.current) return;
       
@@ -329,36 +332,13 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
       }
     };
 
-    const handleEnd = (e: React.MouseEvent | React.TouchEvent) => {
-      if (!isDrawing) return;
-      
-      setIsDrawing(false);
-      startPoint.current = null;
-      lastPoint.current = null;
-      
-      const previewCanvas = previewCanvasRef.current;
-      if (previewCanvas) {
-          const pCtx = previewCanvas.getContext('2d');
-          pCtx?.clearRect(0, 0, width, height);
-      }
-      
-      if (onInteractEnd) onInteractEnd();
-    };
-
-    const handleShapeCommit = (e: React.MouseEvent | React.TouchEvent) => {
+    const handleShapeCommit = (e: React.PointerEvent) => {
         if (!isDrawing) return;
         
-        let endCoords = getCoordinates(e, canvasRef.current!);
+        // Release capture
+        e.currentTarget.releasePointerCapture(e.pointerId);
         
-        // If touch end, fallback logic
-        if (!endCoords && (e as React.TouchEvent).changedTouches && (e as React.TouchEvent).changedTouches.length > 0) {
-             const touch = (e as React.TouchEvent).changedTouches[0];
-             const rect = canvasRef.current!.getBoundingClientRect();
-             endCoords = {
-                x: (touch.clientX - rect.left) * (width / rect.width),
-                y: (touch.clientY - rect.top) * (height / rect.height),
-             };
-        }
+        let endCoords = getCoordinates(e, canvasRef.current!);
         
         if (canvasRef.current && tool !== 'brush' && startPoint.current && endCoords) {
             const ctx = canvasRef.current.getContext('2d');
@@ -370,7 +350,17 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
             removeDisconnectedParts(canvasRef.current);
         }
 
-        handleEnd(e);
+        setIsDrawing(false);
+        startPoint.current = null;
+        lastPoint.current = null;
+        
+        const previewCanvas = previewCanvasRef.current;
+        if (previewCanvas) {
+            const pCtx = previewCanvas.getContext('2d');
+            pCtx?.clearRect(0, 0, width, height);
+        }
+        
+        if (onInteractEnd) onInteractEnd();
     };
 
     return (
@@ -390,6 +380,7 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
         />
         
         {/* Interaction/Preview Layer (Transparent, on top) */}
+        {/* Switched to Pointer Events for better tracking off-canvas */}
         <canvas
             ref={previewCanvasRef}
             width={width}
@@ -398,13 +389,10 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
             style={{ width: `${currentDisplayWidth}px`, height: `${currentDisplayHeight}px` }}
             draggable={false}
             onContextMenu={(e) => e.preventDefault()}
-            onMouseDown={handleStart}
-            onMouseMove={handleMove}
-            onMouseUp={handleShapeCommit}
-            onMouseLeave={handleEnd}
-            onTouchStart={handleStart}
-            onTouchMove={handleMove}
-            onTouchEnd={handleShapeCommit}
+            onPointerDown={handleStart}
+            onPointerMove={handleMove}
+            onPointerUp={handleShapeCommit}
+            onPointerCancel={handleShapeCommit}
         />
       </div>
     );

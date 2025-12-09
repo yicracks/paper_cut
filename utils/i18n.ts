@@ -6,16 +6,17 @@ export const TEXT = {
     appTitle: "Paper Cut Art",
     step_fold: "fold",
     step_cut: "cut",
+    step_show: "preview",
     
     // Controls
+    thickness: "Thickness",
     undo: "Undo",
     redo: "Redo",
     startOver: "Start Over",
     download: "Download",
     savePattern: "Save Mode",
     saveResult: "Save Result",
-    cuttingSettings: "Folding Settings",
-    previewTitle: "PREVIEW",
+    cuttingSettings: "folding settings",
     
     // Folding
     freeFold: "Free Fold",
@@ -69,6 +70,12 @@ export const TEXT = {
     t_step2_desc: "Draw on the canvas. The dark red area represents the paper. Your strokes will cut it away.",
     t_step3_title: "3. Instant Preview",
     t_step3_desc: "Watch the real-time preview on the right to see your unfolded masterpiece.",
+    
+    guide_fold_up: "Fold Up",
+    guide_fold_up_sub: "Fold upwards",
+    guide_cut_canvas: "Draw here",
+    guide_cut_save: "Save",
+    guide_cut_save_sub: "Save your art",
 
     // Reset Warning
     resetWarningTitle: "Reset Canvas?",
@@ -81,8 +88,10 @@ export const TEXT = {
     appTitle: "剪窗花",
     step_fold: "折叠",
     step_cut: "剪裁",
+    step_show: "展示",
     
     // Controls
+    thickness: "笔触粗细",
     undo: "撤回",
     redo: "重做",
     startOver: "重新开始",
@@ -90,7 +99,6 @@ export const TEXT = {
     savePattern: "保存模式",
     saveResult: "保存展开图",
     cuttingSettings: "折叠设定",
-    previewTitle: "展示",
     
     // Folding
     freeFold: "自由折叠",
@@ -144,6 +152,12 @@ export const TEXT = {
     t_step2_desc: "在中间的画布上绘制。深红色区域代表纸张，您的笔触将将其剪掉。",
     t_step3_title: "3. 实时预览",
     t_step3_desc: "右侧将实时显示展开后的完整图案。随时保存您的作品。",
+    
+    guide_fold_up: "向上折叠",
+    guide_fold_up_sub: "点击折叠",
+    guide_cut_canvas: "在此剪裁",
+    guide_cut_save: "保存",
+    guide_cut_save_sub: "保存作品",
 
     // Reset Warning
     resetWarningTitle: "重新开始？",

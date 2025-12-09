@@ -22,40 +22,31 @@ export const hexToRgb = (hex: string): { r: number, g: number, b: number } => {
 };
 
 export const getCoordinates = (
-  event: React.MouseEvent | React.TouchEvent,
+  event: React.MouseEvent | React.TouchEvent | React.PointerEvent,
   canvas: HTMLCanvasElement
 ): { x: number; y: number } | null => {
   const rect = canvas.getBoundingClientRect();
   let clientX, clientY;
 
-  if ((event as React.TouchEvent).touches) {
+  // Handle Touch Events
+  if ((event as any).touches && (event as any).touches.length > 0) {
     const touch = (event as React.TouchEvent).touches[0];
-    if (!touch) return null;
     clientX = touch.clientX;
     clientY = touch.clientY;
-  } else {
-    clientX = (event as React.MouseEvent).clientX;
-    clientY = (event as React.MouseEvent).clientY;
+  } 
+  // Handle Mouse and Pointer Events
+  else {
+    clientX = (event as React.MouseEvent | React.PointerEvent).clientX;
+    clientY = (event as React.MouseEvent | React.PointerEvent).clientY;
   }
 
+  // We explicitly allow coordinates outside the canvas (negative or > width/height)
+  // to enable drawing strokes that cut off the edge of the paper.
   return {
     x: (clientX - rect.left) * (canvas.width / rect.width),
     y: (clientY - rect.top) * (canvas.height / rect.height),
   };
 };
-
-/**
- * Pixel-perfect unfolding using reverse mapping simulation.
- */
-export const generateUnfoldedTexture = (
-  sourceCanvas: HTMLCanvasElement,
-  folds: Fold[],
-  baseSize: number = 1000 // Output resolution
-): string => {
-  // ... (keeping existing unused function if needed for legacy compatibility, though App uses Simulation classes now)
-  return '';
-};
-
 
 export const removeDisconnectedParts = (canvas: HTMLCanvasElement) => {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
