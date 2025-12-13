@@ -13,7 +13,7 @@ interface SettingsModalProps {
   language: Language;
 }
 
-type Tab = 'tutorial' | 'gallery' | 'theme' | 'feedback' | 'about';
+type Tab = 'gallery' | 'theme' | 'about';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
   isOpen, 
@@ -23,7 +23,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   language
 }) => {
   const t = TEXT[language];
-  const [activeTab, setActiveTab] = useState<Tab>('tutorial');
+  const [activeTab, setActiveTab] = useState<Tab>('gallery');
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   
   // Feedback state
@@ -78,10 +78,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const getTabTitle = (tab: Tab) => {
       switch(tab) {
-          case 'tutorial': return t.tab_tutorial;
           case 'gallery': return t.mySavedWorks;
           case 'theme': return t.tab_theme;
-          case 'feedback': return t.tab_feedback;
           case 'about': return t.tab_about;
           default: return tab;
       }
@@ -115,10 +113,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             </h2>
           </div>
           <nav className="flex-1 py-4">
-            <TabButton id="tutorial" icon={BookOpen} label={t.tab_tutorial} />
             <TabButton id="gallery" icon={ImageIcon} label={t.tab_gallery} />
             <TabButton id="theme" icon={Palette} label={t.tab_theme} />
-            <TabButton id="feedback" icon={MessageSquare} label={t.tab_feedback} />
             <TabButton id="about" icon={Info} label={t.tab_about} />
           </nav>
         </div>
@@ -138,81 +134,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           <div className="flex-1 overflow-y-auto p-8 bg-white">
-            
-            {/* Tutorial Tab */}
-            {activeTab === 'tutorial' && (
-              <div className="space-y-8 max-w-2xl mx-auto pb-10">
-                
-                {/* Step 1 */}
-                <div className="bg-[#fdfbf7] rounded-sm border border-[#eaddcf] overflow-hidden">
-                  <div className="bg-[#f0ece2] p-8 flex justify-center items-center">
-                      <div className="grid grid-cols-3 gap-2 w-40">
-                          <div className="bg-white rounded-sm h-10 border border-[#d4c4b0]"></div>
-                          <div className="bg-white rounded-sm h-10 border border-red-400 relative shadow-sm">
-                              <div className="absolute inset-0 flex items-center justify-center text-red-600"><ArrowUp size={20} /></div>
-                              <div className="absolute inset-0 -m-1 border-2 border-yellow-500 rounded-sm animate-pulse"></div>
-                              <MockTooltip text={t.guide_fold_up} subtext={t.guide_fold_up_sub} position="top" />
-                          </div>
-                          <div className="bg-white rounded-sm h-10 border border-[#d4c4b0]"></div>
-                          <div className="bg-white rounded-sm h-10 border border-[#d4c4b0]"></div>
-                          <div className="bg-[#C23531] rounded-full w-8 h-8 mx-auto mt-1 border-2 border-[#a02622]"></div>
-                          <div className="bg-white rounded-sm h-10 border border-[#d4c4b0] relative">
-                               <div className="absolute inset-0 flex items-center justify-center text-zinc-300"><ArrowRight size={20} /></div>
-                          </div>
-                          <div className="bg-white rounded-sm h-10 border border-[#d4c4b0]"></div>
-                          <div className="bg-white rounded-sm h-10 border border-[#d4c4b0]"></div>
-                          <div className="bg-white rounded-sm h-10 border border-[#d4c4b0] relative">
-                                <div className="absolute inset-0 flex items-center justify-center text-zinc-300"><CornerRightDown size={20} /></div>
-                          </div>
-                      </div>
-                  </div>
-                  <div className="p-4">
-                    <h4 className="font-bold text-[#2C2C2C] mb-1 font-serif">{t.t_step1_title}</h4>
-                    <p className="text-sm text-[#5c5c5c] leading-relaxed">{t.t_step1_desc}</p>
-                  </div>
-                </div>
-
-                {/* Step 2 */}
-                <div className="bg-[#fdfbf7] rounded-sm border border-[#eaddcf] overflow-hidden">
-                   <div className="bg-[#f0ece2] p-8 flex justify-center items-center">
-                      <div className="w-48 h-48 bg-white border border-[#d4c4b0] rounded-sm relative flex items-center justify-center shadow-sm">
-                           <div className="w-32 h-32 bg-[#C23531] rounded-sm opacity-20"></div>
-                           <div className="absolute inset-0 flex items-center justify-center">
-                               <div className="bg-[#fffbf0] text-red-900 border border-[#d4c4b0] px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-bounce">
-                                   <Hand size={16} />
-                                   <span className="text-xs font-bold font-serif">{t.guide_cut_canvas}</span>
-                               </div>
-                           </div>
-                      </div>
-                   </div>
-                   <div className="p-4">
-                      <h4 className="font-bold text-[#2C2C2C] mb-1 font-serif">{t.t_step2_title}</h4>
-                      <p className="text-sm text-[#5c5c5c] leading-relaxed">{t.t_step2_desc}</p>
-                   </div>
-                </div>
-
-                {/* Step 3 */}
-                <div className="bg-[#fdfbf7] rounded-sm border border-[#eaddcf] overflow-hidden">
-                   <div className="bg-[#f0ece2] p-8 flex justify-center items-center gap-4">
-                       <div className="w-56 bg-white p-2 rounded-sm shadow-sm border border-[#d4c4b0]">
-                           <div className="bg-[#fffbf0] h-32 rounded-sm flex items-center justify-center text-red-200 mb-2 font-serif text-4xl">✿</div>
-                           <div className="relative">
-                               <div className="w-full h-8 bg-[#C23531] rounded-sm flex items-center justify-center text-white text-xs gap-2 font-serif">
-                                   <Download size={14} /> {t.saveResult}
-                               </div>
-                               <MockTooltip text={t.guide_cut_save} subtext={t.guide_cut_save_sub} position="bottom" />
-                           </div>
-                       </div>
-                   </div>
-                   <div className="p-4">
-                      <h4 className="font-bold text-[#2C2C2C] mb-1 font-serif">{t.t_step3_title}</h4>
-                      <p className="text-sm text-[#5c5c5c] leading-relaxed">{t.t_step3_desc}</p>
-                   </div>
-                </div>
-
-              </div>
-            )}
-
             {/* Gallery Tab */}
             {activeTab === 'gallery' && (
               <div className="space-y-6">
@@ -272,62 +193,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             )}
 
-            {/* Feedback Tab */}
-            {activeTab === 'feedback' && (
-              <form onSubmit={handleFeedbackSubmit} className="max-w-md space-y-4 font-serif">
-                <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[#5c5c5c]">{t.yourSuggestion}</label>
-                    <textarea 
-                        required
-                        className="w-full h-32 p-3 rounded-sm border border-[#d4c4b0] bg-[#fdfbf7] focus:ring-1 focus:ring-[#C23531] focus:border-[#C23531] outline-none resize-none"
-                        placeholder={t.placeholderFeedback}
-                        value={feedbackText}
-                        onChange={(e) => setFeedbackText(e.target.value)}
-                    ></textarea>
-                </div>
-                
-                <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[#5c5c5c]">{t.uploadScreenshot}</label>
-                    <div className="flex items-center justify-center w-full">
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-[#d4c4b0] border-dashed rounded-sm cursor-pointer bg-[#fdfbf7] hover:bg-[#fffbf0] transition-colors">
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                {feedbackImage ? (
-                                    <div className="text-sm text-green-700 font-medium flex items-center gap-2">
-                                        <ImageIcon size={20} />
-                                        {feedbackImage.name}
-                                    </div>
-                                ) : (
-                                    <>
-                                        <Upload className="w-8 h-8 mb-3 text-[#d4c4b0]" />
-                                        <p className="text-sm text-[#5c5c5c]"><span className="font-semibold">{t.clickToUpload}</span> {t.dragDrop}</p>
-                                    </>
-                                )}
-                            </div>
-                            <input 
-                                type="file" 
-                                className="hidden" 
-                                accept="image/*"
-                                onChange={(e) => setFeedbackImage(e.target.files?.[0] || null)}
-                            />
-                        </label>
-                    </div>
-                </div>
-
-                <button 
-                    type="submit"
-                    disabled={feedbackStatus !== 'idle'}
-                    className={`w-full py-3 rounded-sm font-bold text-white transition-all btn-seal ${
-                        feedbackStatus === 'sent' 
-                        ? 'bg-green-600' 
-                        : 'bg-[#C23531] hover:bg-[#b91c1c]'
-                    }`}
-                >
-                    {feedbackStatus === 'idle' && t.submitFeedback}
-                    {feedbackStatus === 'sending' && t.sending}
-                    {feedbackStatus === 'sent' && t.thankYou}
-                </button>
-              </form>
-            )}
 
             {/* About Tab */}
             {activeTab === 'about' && (
