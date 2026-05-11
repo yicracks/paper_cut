@@ -1,8 +1,9 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Scissors, Settings, Languages, Download, ArrowRight, AlertTriangle, SlidersHorizontal, X, RotateCcw, Undo2, Redo2 } from 'lucide-react';
+import { Scissors, Settings, Languages, Download, ArrowRight, AlertTriangle, SlidersHorizontal, X, RotateCcw, Undo2, Redo2, Paintbrush } from 'lucide-react';
 import JianzhiCanvas, { JianzhiCanvasHandle } from './components/JianzhiCanvas';
 import FoldingControls from './components/FoldingControls';
+import BrushToolbox from './components/BrushToolbox';
 import SettingsModal from './components/SettingsModal';
 import { PaperSimulation } from './utils/simulationUtils';
 import { PresetSimulation } from './utils/presetSimulation';
@@ -55,6 +56,9 @@ const App = () => {
 
   // UI State
   const [showCuttingSettings, setShowCuttingSettings] = useState(false);
+  const [showBrushToolbox, setShowBrushToolbox] = useState(false);
+  const [currentTool, setCurrentTool] = useState<DrawingTool>('brush');
+  const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
 
   // Reset Warning State
   const [pendingResetAction, setPendingResetAction] = useState<(() => void) | null>(null);
@@ -64,6 +68,7 @@ const App = () => {
   const simulationRef = useRef<SimulationEngine | null>(null);
   const canvasRef = useRef<JianzhiCanvasHandle>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const cuttingAreaRef = useRef<HTMLDivElement>(null);
   
   // Initialize simulation engine only once or when needed
   if (!simulationRef.current) {
@@ -318,15 +323,34 @@ const App = () => {
                      <span className="text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">{t.step_cut}</span>
                 </div>
                 
-                <div className="relative inline-block p-4 bg-white border border-[#d4c4b0] shadow-md z-10 chinese-card">
+                <div ref={cuttingAreaRef} className="relative inline-block p-4 bg-white border border-[#d4c4b0] shadow-md z-10 chinese-card">
                     {/* Settings Toggle Button */}
-                    <button
-                        onClick={() => setShowCuttingSettings(!showCuttingSettings)}
-                        className="absolute top-2 left-2 z-30 p-1.5 bg-white/90 border border-[#d4c4b0] rounded-sm text-[#8c7b6c] hover:text-[#C23531] hover:border-[#C23531] shadow-sm transition-all"
-                        title={t.cuttingSettings}
-                    >
-                        <SlidersHorizontal size={16} />
-                    </button>
+                    <div className="absolute top-2 left-2 z-30 flex gap-1">
+                        <button
+                            onClick={() => {
+                                setShowCuttingSettings(!showCuttingSettings);
+                                if (!showCuttingSettings) setShowBrushToolbox(false);
+                            }}
+                            className={`p-1.5 bg-white/90 border rounded-sm transition-all shadow-sm ${
+                                showCuttingSettings ? 'text-[#C23531] border-[#C23531]' : 'text-[#8c7b6c] border-[#d4c4b0] hover:text-[#C23531] hover:border-[#C23531]'
+                            }`}
+                            title={t.cuttingSettings}
+                        >
+                            <SlidersHorizontal size={16} />
+                        </button>
+                        <button
+                            onClick={() => {
+                                setShowBrushToolbox(!showBrushToolbox);
+                                if (!showBrushToolbox) setShowCuttingSettings(false);
+                            }}
+                            className={`p-1.5 bg-white/90 border rounded-sm transition-all shadow-sm ${
+                                showBrushToolbox ? 'text-[#C23531] border-[#C23531]' : 'text-[#8c7b6c] border-[#d4c4b0] hover:text-[#C23531] hover:border-[#C23531]'
+                            }`}
+                            title={t.brushSettings}
+                        >
+                            <Paintbrush size={16} />
+                        </button>
+                    </div>
 
                     {/* History Actions (Top Right of Canvas) */}
                     <div className="absolute top-2 right-2 z-30 flex gap-1">
@@ -383,13 +407,25 @@ const App = () => {
                         </div>
                     )}
 
+                    {showBrushToolbox && (
+                        <BrushToolbox
+                             currentTool={currentTool}
+                             onToolChange={setCurrentTool}
+                             brushSize={brushSize}
+                             onBrushSizeChange={setBrushSize}
+                             onClose={() => setShowBrushToolbox(false)}
+                             language={language}
+                             dragConstraints={cuttingAreaRef}
+                        />
+                    )}
+
                     <JianzhiCanvas
                         ref={canvasRef}
                         width={SIM_SIZE}
                         height={SIM_SIZE}
                         displaySize={displaySize}
-                        tool={'brush'}
-                        brushSize={DEFAULT_BRUSH_SIZE}
+                        tool={currentTool}
+                        brushSize={brushSize}
                         onInit={initCutCanvas}
                         onInteractEnd={updatePreview} 
                         onInteractStart={() => {}}

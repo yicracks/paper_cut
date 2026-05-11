@@ -16,7 +16,15 @@ export const TEXT = {
     download: "Download",
     savePattern: "Save Mode",
     saveResult: "Save Result",
-    cuttingSettings: "folding settings",
+    cuttingSettings: "Folding Settings",
+    brushSettings: "Brush Toolbox",
+    brush_free: "Freehand",
+    brush_line: "Line",
+    brush_circle: "Circle",
+    brush_rect: "Rectangle",
+    brush_ellipse: "Ellipse",
+    brush_star: "Star",
+    brushSize: "Size",
     
     // Folding
     freeFold: "Free Fold",
@@ -99,6 +107,14 @@ export const TEXT = {
     savePattern: "保存模式",
     saveResult: "保存展开图",
     cuttingSettings: "折叠设定",
+    brushSettings: "画笔工具箱",
+    brush_free: "自由画笔",
+    brush_line: "直线",
+    brush_circle: "圆",
+    brush_rect: "长方形",
+    brush_ellipse: "椭圆",
+    brush_star: "星星",
+    brushSize: "笔触粗细",
     
     // Folding
     freeFold: "自由折叠",
