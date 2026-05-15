@@ -47,10 +47,9 @@ const BrushToolbox: React.FC<BrushToolboxProps> = ({
       className="absolute top-10 left-12 w-48 z-40 bg-white/95 backdrop-blur-md border border-[#d4c4b0] shadow-2xl p-3 rounded-sm chinese-card cursor-move"
     >
       <div className="flex justify-between items-center mb-3 pb-1 border-b border-[#eaddcf] select-none">
-        <h3 className="text-[10px] font-bold text-[#5c5c5c] tracking-widest font-serif flex items-center gap-1">
+        <div className="flex items-center gap-1">
           <Paintbrush size={12} className="text-[#C23531]" />
-          {t.brushSettings}
-        </h3>
+        </div>
         <button 
           onClick={(e) => {
             e.stopPropagation();
@@ -83,8 +82,7 @@ const BrushToolbox: React.FC<BrushToolboxProps> = ({
 
         {/* Brush Size */}
         <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-bold text-[#8c7b6c] uppercase tracking-wider">{t.brushSize}</span>
+          <div className="flex justify-end items-center">
             <span className="text-[10px] font-mono text-[#5c5c5c] bg-[#f9f7f2] px-1 rounded-sm border border-[#eaddcf]">{brushSize}px</span>
           </div>
           <input

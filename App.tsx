@@ -19,10 +19,15 @@ const useDisplaySize = (baseSize: number, margin: number = DISPLAY_MARGIN) => {
     useEffect(() => {
         const handleResize = () => {
             const width = window.innerWidth;
-            // Ensure it fits within width minus margin, but max out at baseSize
-            // For mobile, we might want to be more aggressive with shrinking
-            const availableWidth = Math.min(width - margin, baseSize);
-            setDisplaySize(Math.floor(availableWidth));
+            const isMobile = width < 768;
+            // On mobile, the margin should account for the card's padding too
+            const cardPadding = isMobile ? 16 : 32; // p-2 vs p-4 on both sides
+            const baseMargin = isMobile ? 60 : 40; 
+            const availableWidth = Math.min(width - baseMargin - cardPadding, baseSize);
+            
+            // For mobile, slightly cap the size so it doesn't feel "enormous"
+            const finalSize = isMobile ? Math.min(availableWidth, 360) : availableWidth;
+            setDisplaySize(Math.max(280, Math.floor(finalSize)));
         };
 
         window.addEventListener('resize', handleResize);
@@ -313,17 +318,17 @@ const App = () => {
         </div>
       </header>
 
-      <main className="max-w-[1400px] mx-auto mt-6 px-2 md:px-4">
+      <main className="max-w-[1400px] mx-auto mt-2 md:mt-6 px-2 md:px-4">
         {/* Main Layout: Cut Canvas (Center) + Preview (Right) */}
-        <div className="flex flex-col xl:flex-row items-start justify-center gap-6">
+        <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-4 md:gap-6">
             
             {/* COLUMN 1: Drawing Canvas + Overlay Controls */}
-            <div className="flex flex-col gap-4 items-center w-full xl:w-auto">
-                 <div className="flex items-center justify-between w-full max-w-[500px] px-2 border-b border-[#d4c4b0] pb-1">
-                     <span className="text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">{t.step_cut}</span>
+            <div className="flex flex-col gap-3 md:gap-4 items-center w-full lg:w-auto">
+                 <div className="flex items-center justify-between w-full max-w-[482px] px-2 border-b border-[#d4c4b0] pb-0.5">
+                     <span className="text-xs md:text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">{t.step_cut}</span>
                 </div>
                 
-                <div ref={cuttingAreaRef} className="relative inline-block p-4 bg-white border border-[#d4c4b0] shadow-md z-10 chinese-card">
+                <div ref={cuttingAreaRef} className="relative inline-block p-2 md:p-4 bg-white border border-[#d4c4b0] shadow-md z-10 chinese-card">
                     {/* Settings Toggle Button */}
                     <div className="absolute top-2 left-2 z-30 flex gap-1">
                         <button
@@ -432,7 +437,7 @@ const App = () => {
                     />
                 </div>
 
-                <div className="relative w-full max-w-[500px]">
+                <div className="relative w-full max-w-[482px]">
                     <button 
                         onClick={handleSaveCut}
                         className={`w-full py-3 rounded-sm font-serif font-bold transition-all flex items-center justify-center gap-2 text-white shadow-md border border-[#a02622] btn-seal ${
@@ -447,17 +452,17 @@ const App = () => {
             </div>
 
             {/* Arrow Divider (Desktop only) */}
-            <div className="text-[#d4c4b0] hidden xl:block self-start pt-48 opacity-50">
+            <div className="text-[#d4c4b0] hidden lg:block self-start pt-48 opacity-50">
                 <ArrowRight size={32} />
             </div>
-
+            
             {/* COLUMN 2: Preview */}
-            <div className="flex flex-col gap-4 items-center xl:sticky xl:top-24 w-full xl:w-auto">
-                 <div className="flex items-center justify-between w-full max-w-[500px] px-2 border-b border-[#d4c4b0] pb-1">
-                     <span className="text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">{t.step_show}</span>
+            <div className="flex flex-col gap-3 md:gap-4 items-center lg:sticky lg:top-24 w-full lg:w-auto">
+                 <div className="flex items-center justify-between w-full max-w-[482px] px-2 border-b border-[#d4c4b0] pb-0.5">
+                     <span className="text-xs md:text-sm font-bold text-[#8c7b6c] font-serif tracking-widest">{t.step_show}</span>
                  </div>
                  
-                 <div className="relative p-4 bg-white border border-[#d4c4b0] shadow-md flex items-center justify-center overflow-hidden chinese-card inline-block">
+                 <div className="relative p-2 md:p-4 bg-white border border-[#d4c4b0] shadow-md flex items-center justify-center overflow-hidden chinese-card inline-block">
                     <div 
                         style={{ width: displaySize, height: displaySize }}
                         className="relative flex items-center justify-center bg-[#f9f7f2]"
@@ -473,7 +478,7 @@ const App = () => {
                     </div>
                  </div>
 
-                 <div className="relative w-full max-w-[500px]">
+                 <div className="relative w-full max-w-[482px]">
                     <button 
                         onClick={handleSaveResult}
                         className={`w-full py-3 rounded-sm font-serif font-bold transition-all flex items-center justify-center gap-2 text-white shadow-lg border-2 border-[#a02622] btn-seal ${
