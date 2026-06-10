@@ -229,7 +229,7 @@ const App = () => {
 
   // --- Watermark Utility for Saving ---
   // Switch to false to instantly output clean, no-watermark copies
-  const ENABLE_SAVING_WATERMARK = true;
+  const ENABLE_SAVING_WATERMARK = false;
 
   const addSubtleWatermark = (
       canvas: HTMLCanvasElement, 
