@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Scissors, Settings, Languages, Download, ArrowRight, AlertTriangle, SlidersHorizontal, X, RotateCcw, Undo2, Redo2, Paintbrush } from 'lucide-react';
+import { Scissors, Settings, Languages, Download, ArrowRight, AlertTriangle, SlidersHorizontal, X, RotateCcw, Undo2, Redo2, Paintbrush, Sparkles } from 'lucide-react';
 import JianzhiCanvas, { JianzhiCanvasHandle } from './components/JianzhiCanvas';
 import FoldingControls from './components/FoldingControls';
 import BrushToolbox from './components/BrushToolbox';
@@ -227,11 +227,55 @@ const App = () => {
       };
   };
 
+  // --- Watermark Utility for Saving ---
+  // Switch to false to instantly output clean, no-watermark copies
+  const ENABLE_SAVING_WATERMARK = true;
+
+  const addSubtleWatermark = (
+      canvas: HTMLCanvasElement, 
+      text: string = "www.jianchuanghua.com"
+  ): string => {
+      // CODE FOR NO-WATERMARK SWAP-IN (Can be easily enabled by setting ENABLE_SAVING_WATERMARK to false)
+      if (!ENABLE_SAVING_WATERMARK) {
+          return canvas.toDataURL();
+      }
+
+      // CODE FOR WATERMARK
+      try {
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = canvas.height;
+          const ctx = tempCanvas.getContext('2d');
+          if (!ctx) return canvas.toDataURL();
+
+          // Draw the original content
+          ctx.drawImage(canvas, 0, 0);
+
+          // Configure a very subtle, faint light watermark at the center
+          ctx.save();
+          const fontSize = Math.max(12, Math.floor(canvas.width * 0.04));
+          ctx.font = `300 ${fontSize}px sans-serif`;
+          
+          // We use a semi-transparent slate-dark color for reliable legibility across red and light backgrounds
+          ctx.fillStyle = 'rgba(90, 75, 65, 0.22)'; 
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+          ctx.restore();
+
+          return tempCanvas.toDataURL();
+      } catch (err) {
+          console.error("Watermark generation failed, falling back to clean image:", err);
+          return canvas.toDataURL();
+      }
+  };
+
   const handleSaveCut = () => {
       const cutCanvas = canvasRef.current?.getCanvas();
       if (!cutCanvas) return;
 
-      const cutDataUrl = cutCanvas.toDataURL();
+      const cutDataUrl = addSubtleWatermark(cutCanvas);
       const ts = getTimestamp().str;
       const name = getNameInfo();
       
@@ -249,9 +293,9 @@ const App = () => {
       // Ensure preview is up to date
       updatePreview();
       
-      const previewDataUrl = previewCanvasRef.current.toDataURL();
+      const previewDataUrl = addSubtleWatermark(previewCanvasRef.current);
       const cutCanvas = canvasRef.current?.getCanvas();
-      const cutImage = cutCanvas ? cutCanvas.toDataURL() : undefined;
+      const cutImage = cutCanvas ? addSubtleWatermark(cutCanvas) : undefined;
 
       const ts = getTimestamp();
       const name = getNameInfo();
@@ -337,7 +381,10 @@ const App = () => {
                         <button
                             onClick={() => {
                                 setShowCuttingSettings(!showCuttingSettings);
-                                if (!showCuttingSettings) setShowBrushToolbox(false);
+                                if (!showCuttingSettings) {
+                                    setShowBrushToolbox(false);
+                                    setShowStencilPicker(false);
+                                }
                             }}
                             className={`p-1.5 bg-white/90 border rounded-sm transition-all shadow-sm ${
                                 showCuttingSettings ? 'text-[#C23531] border-[#C23531]' : 'text-[#8c7b6c] border-[#d4c4b0] hover:text-[#C23531] hover:border-[#C23531]'
@@ -349,7 +396,10 @@ const App = () => {
                         <button
                             onClick={() => {
                                 setShowBrushToolbox(!showBrushToolbox);
-                                if (!showBrushToolbox) setShowCuttingSettings(false);
+                                if (!showBrushToolbox) {
+                                    setShowCuttingSettings(false);
+                                    setShowStencilPicker(false);
+                                }
                             }}
                             className={`p-1.5 bg-white/90 border rounded-sm transition-all shadow-sm ${
                                 showBrushToolbox ? 'text-[#C23531] border-[#C23531]' : 'text-[#8c7b6c] border-[#d4c4b0] hover:text-[#C23531] hover:border-[#C23531]'

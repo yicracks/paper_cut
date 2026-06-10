@@ -22,7 +22,7 @@ const StencilPicker: React.FC<StencilPickerProps> = ({
   const isZh = language === 'zh';
   const [activeCategory, setActiveCategory] = React.useState<string>('all');
   const [customText, setCustomText] = React.useState('福');
-  const [selectedFrame, setSelectedFrame] = React.useState<'round' | 'diamond' | 'lantern'>('round');
+  const [selectedFrame, setSelectedFrame] = React.useState<'none' | 'round' | 'diamond' | 'lantern'>('none');
 
   const categories = [
     { id: 'all', zh: '全部', en: 'All' },
@@ -37,9 +37,15 @@ const StencilPicker: React.FC<StencilPickerProps> = ({
     (s) => activeCategory === 'all' || s.category === activeCategory
   );
 
-  const getCustomSvg = (text: string, frame: 'round' | 'diamond' | 'lantern') => {
+  const getCustomSvg = (text: string, frame: 'none' | 'round' | 'diamond' | 'lantern') => {
     const cleanedText = (text || '').trim().slice(0, 2); // Limit to 2 characters max
     if (!cleanedText) return '';
+
+    if (frame === 'none') {
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor">
+  <text x="50" y="52" font-family="'Noto Serif SC', 'STKaiti', 'Kaiti', 'Georgia', 'serif', sans-serif" font-size="${cleanedText.length > 1 ? '34' : '56'}" font-weight="900" text-anchor="middle" dominant-baseline="central" fill="currentColor">${cleanedText}</text>
+</svg>`;
+    }
 
     if (frame === 'diamond') {
       return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor">
@@ -173,9 +179,10 @@ const StencilPicker: React.FC<StencilPickerProps> = ({
               <span className="text-[10px] font-bold text-[#8c7b6c] font-serif">
                 {isZh ? '选择剪纸花栏边框' : 'Select Border Style'}
               </span>
-              <div className="grid grid-cols-3 gap-1">
+              <div className="grid grid-cols-2 gap-1.5">
                 {(
                   [
+                    { id: 'none', zh: '纯字无边', en: 'None' },
                     { id: 'round', zh: '团圆双环', en: 'Round' },
                     { id: 'diamond', zh: '春联福格', en: 'Diamond' },
                     { id: 'lantern', zh: '喜庆红灯', en: 'Lantern' },
@@ -184,7 +191,7 @@ const StencilPicker: React.FC<StencilPickerProps> = ({
                   <button
                     key={frm.id}
                     onClick={() => setSelectedFrame(frm.id)}
-                    className={`px-1 py-0.5 text-[9px] rounded-sm border cursor-pointer font-serif transition-all text-center truncate ${
+                    className={`px-1.5 py-1 text-[9px] rounded-sm border cursor-pointer font-serif transition-all text-center truncate ${
                       selectedFrame === frm.id
                         ? 'bg-[#C23531]/10 text-[#C23531] border-[#C23531] font-bold'
                         : 'bg-white text-[#5c5c5c] border-[#eaddcf] hover:border-[#C23531]'
