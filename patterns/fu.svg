@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor">
+  <!-- Symmetrical/Bold traditional Fu silhouette with connected bars -->
+  <g fill-rule="evenodd">
+    <!-- Circle Frame -->
+    <path d="M50,4 C24.6,4 4,24.6 4,50 C4,75.4 24.6,96 50,96 C75.4,96 96,75.4 96,50 C96,24.6 75.4,4 50,4 Z M50,12 C71,12 88,29 88,50 C88,71 71,88 50,88 C29,88 12,71 12,50 C12,29 29,12 50,12 Z"/>
+    <!-- Bold simplified Chinese Fu parts -->
+    <path d="M22,35 H35 V39 H22 Z M28,39 H32 V72 H28 Z M45,30 H75 V34 H45 Z M48,39 H72 V50 H48 Z M52,43 H68 V46 H52 Z M48,55 H72 V72 H48 Z M52,59 H68 V68 H52 Z"/>
+  </g>
+</svg>

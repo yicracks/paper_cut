@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Pencil, Minus, Circle, Square, Star, CircleDot, X, Paintbrush } from 'lucide-react';
+import { Pencil, Minus, Circle, Square, Star, CircleDot, X, Paintbrush, Plus } from 'lucide-react';
 import { DrawingTool, Language } from '../types';
 import { TEXT } from '../utils/i18n';
 import { motion } from 'motion/react';
@@ -13,6 +13,7 @@ interface BrushToolboxProps {
   onClose: () => void;
   language: Language;
   dragConstraints?: React.RefObject<HTMLDivElement | null>;
+  onToggleStencils?: () => void;
 }
 
 const BrushToolbox: React.FC<BrushToolboxProps> = ({
@@ -22,17 +23,18 @@ const BrushToolbox: React.FC<BrushToolboxProps> = ({
   onBrushSizeChange,
   onClose,
   language,
-  dragConstraints
+  dragConstraints,
+  onToggleStencils
 }) => {
   const t = TEXT[language];
 
-  const tools: { id: DrawingTool; icon: React.ReactNode; label: string }[] = [
+  const tools: { id: DrawingTool | 'more'; icon: React.ReactNode; label: string }[] = [
     { id: 'brush', icon: <Pencil size={18} />, label: t.brush_free },
     { id: 'line', icon: <Minus size={18} />, label: t.brush_line },
     { id: 'circle', icon: <Circle size={18} />, label: t.brush_circle },
     { id: 'ellipse', icon: <CircleDot size={18} />, label: t.brush_ellipse },
     { id: 'rect', icon: <Square size={18} />, label: t.brush_rect },
-    { id: 'star', icon: <Star size={18} />, label: t.brush_star },
+    { id: 'more', icon: <Plus size={18} />, label: '更多' },
   ];
 
   return (
@@ -67,7 +69,13 @@ const BrushToolbox: React.FC<BrushToolboxProps> = ({
           {tools.map((tool) => (
             <button
               key={tool.id}
-              onClick={() => onToolChange(tool.id)}
+              onClick={() => {
+                if (tool.id === 'more') {
+                  onToggleStencils?.();
+                } else {
+                  onToolChange(tool.id);
+                }
+              }}
               className={`flex items-center justify-center p-2.5 rounded-sm border transition-all cursor-pointer ${
                 currentTool === tool.id
                   ? 'bg-red-50 border-[#C23531] text-[#C23531] shadow-inner'

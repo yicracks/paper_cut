@@ -54,6 +54,7 @@ export interface GalleryItem {
 export interface AppSettings {
   dynamicTheme: boolean;
   disableResetWarning?: boolean;
+  autoRemoveDisconnected?: boolean;
 }
 
 export type Language = 'en' | 'zh';

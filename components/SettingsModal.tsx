@@ -13,7 +13,7 @@ interface SettingsModalProps {
   language: Language;
 }
 
-type Tab = 'gallery' | 'theme' | 'about';
+type Tab = 'gallery' | 'theme' | 'cutting' | 'about';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
   isOpen, 
@@ -80,6 +80,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       switch(tab) {
           case 'gallery': return t.mySavedWorks;
           case 'theme': return t.tab_theme;
+          case 'cutting': return t.tab_cutting;
           case 'about': return t.tab_about;
           default: return tab;
       }
@@ -115,6 +116,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           <nav className="flex-1 py-4">
             <TabButton id="gallery" icon={ImageIcon} label={t.tab_gallery} />
             <TabButton id="theme" icon={Palette} label={t.tab_theme} />
+            <TabButton id="cutting" icon={Scissors} label={t.tab_cutting} />
             <TabButton id="about" icon={Info} label={t.tab_about} />
           </nav>
         </div>
@@ -174,22 +176,53 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {/* Theme Settings Tab */}
             {activeTab === 'theme' && (
-              <div className="max-w-md">
-                <label className="flex items-center justify-between p-4 rounded-sm border border-[#eaddcf] cursor-pointer hover:bg-[#fffbf0] transition-colors bg-[#fdfbf7]">
-                  <div className="space-y-1">
-                    <div className="font-medium text-[#2C2C2C] font-serif">{t.dynamicTheme}</div>
-                    <div className="text-sm text-[#5c5c5c]">{t.dynamicThemeDesc}</div>
-                  </div>
-                  <div className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                        type="checkbox" 
-                        className="sr-only peer"
-                        checked={settings.dynamicTheme}
-                        onChange={(e) => onUpdateSettings({ dynamicTheme: e.target.checked })}
-                    />
-                    <div className="w-11 h-6 bg-[#d4c4b0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C23531]"></div>
-                  </div>
-                </label>
+              <div className="max-w-md space-y-6">
+                <div>
+                  <h4 className="text-sm font-bold text-[#8c7b6c] mb-3 font-serif border-b border-[#eaddcf] pb-1">
+                    {language === 'zh' ? '界面外观' : 'Appearance'}
+                  </h4>
+                  <label className="flex items-center justify-between p-4 rounded-sm border border-[#eaddcf] cursor-pointer hover:bg-[#fffbf0] transition-colors bg-[#fdfbf7]">
+                    <div className="space-y-1">
+                      <div className="font-medium text-[#2C2C2C] font-serif">{t.dynamicTheme}</div>
+                      <div className="text-sm text-[#5c5c5c]">{t.dynamicThemeDesc}</div>
+                    </div>
+                    <div className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                          type="checkbox" 
+                          className="sr-only peer"
+                          checked={settings.dynamicTheme}
+                          onChange={(e) => onUpdateSettings({ dynamicTheme: e.target.checked })}
+                      />
+                      <div className="w-11 h-6 bg-[#d4c4b0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C23531]"></div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Cutting Settings Tab */}
+            {activeTab === 'cutting' && (
+              <div className="max-w-md space-y-6">
+                <div>
+                  <h4 className="text-sm font-bold text-[#8c7b6c] mb-3 font-serif border-b border-[#eaddcf] pb-1">
+                    {t.cuttingSettingsTitle}
+                  </h4>
+                  <label className="flex items-center justify-between p-4 rounded-sm border border-[#eaddcf] cursor-pointer hover:bg-[#fffbf0] transition-colors bg-[#fdfbf7]">
+                    <div className="space-y-1 pr-4">
+                      <div className="font-medium text-[#2C2C2C] font-serif">{t.autoRemoveDisconnected}</div>
+                      <div className="text-xs text-[#5c5c5c] leading-relaxed">{t.autoRemoveDisconnectedDesc}</div>
+                    </div>
+                    <div className="relative inline-flex items-center cursor-pointer shrink-0">
+                      <input 
+                          type="checkbox" 
+                          className="sr-only peer"
+                          checked={settings.autoRemoveDisconnected !== false}
+                          onChange={(e) => onUpdateSettings({ autoRemoveDisconnected: e.target.checked })}
+                      />
+                      <div className="w-11 h-6 bg-[#d4c4b0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C23531]"></div>
+                    </div>
+                  </label>
+                </div>
               </div>
             )}
 

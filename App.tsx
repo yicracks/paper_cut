@@ -5,6 +5,8 @@ import JianzhiCanvas, { JianzhiCanvasHandle } from './components/JianzhiCanvas';
 import FoldingControls from './components/FoldingControls';
 import BrushToolbox from './components/BrushToolbox';
 import SettingsModal from './components/SettingsModal';
+import StencilPicker from './components/StencilPicker';
+import { StencilPattern } from './patterns';
 import { PaperSimulation } from './utils/simulationUtils';
 import { PresetSimulation } from './utils/presetSimulation';
 import { FoldDirection, FoldingMode, SimulationEngine, AppSettings, Language } from './types';
@@ -62,6 +64,7 @@ const App = () => {
   // UI State
   const [showCuttingSettings, setShowCuttingSettings] = useState(false);
   const [showBrushToolbox, setShowBrushToolbox] = useState(false);
+  const [showStencilPicker, setShowStencilPicker] = useState(false);
   const [currentTool, setCurrentTool] = useState<DrawingTool>('brush');
   const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
 
@@ -421,6 +424,21 @@ const App = () => {
                              onClose={() => setShowBrushToolbox(false)}
                              language={language}
                              dragConstraints={cuttingAreaRef}
+                             onToggleStencils={() => {
+                                 setShowStencilPicker(!showStencilPicker);
+                             }}
+                        />
+                    )}
+
+                    {showStencilPicker && (
+                        <StencilPicker
+                             onSelect={(stencil) => {
+                                 canvasRef.current?.addStencil(stencil);
+                                 setShowStencilPicker(false);
+                             }}
+                             onClose={() => setShowStencilPicker(false)}
+                             language={language}
+                             dragConstraints={cuttingAreaRef}
                         />
                     )}
 
@@ -434,18 +452,19 @@ const App = () => {
                         onInit={initCutCanvas}
                         onInteractEnd={updatePreview} 
                         onInteractStart={() => {}}
+                        autoRemoveDisconnected={appSettings.autoRemoveDisconnected !== false}
                     />
                 </div>
 
                 <div className="relative w-full max-w-[482px]">
                     <button 
                         onClick={handleSaveCut}
-                        className={`w-full py-3 rounded-sm font-serif font-bold transition-all flex items-center justify-center gap-2 text-white shadow-md border border-[#a02622] btn-seal ${
+                        className={`w-full py-3 rounded-sm font-serif font-bold transition-all flex items-center justify-center gap-2 text-white shadow-lg border-2 border-[#a02622] btn-seal ${
                             dynamicThemeColor ? '' : 'bg-[#C23531] hover:bg-[#b91c1c]'
                         }`}
                         style={dynamicThemeColor ? { backgroundColor: dynamicThemeColor } : {}}
                     >
-                        <Download size={18} />
+                        <Download size={20} />
                         {t.savePattern}
                     </button>
                  </div>
@@ -486,7 +505,7 @@ const App = () => {
                         }`}
                         style={dynamicThemeColor ? { backgroundColor: dynamicThemeColor } : {}}
                     >
-                        <Download size={24} />
+                        <Download size={20} />
                         {t.saveResult}
                     </button>
                  </div>

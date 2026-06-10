@@ -46,6 +46,7 @@ export const TEXT = {
     tab_tutorial: "Tutorial",
     tab_gallery: "My Saves",
     tab_theme: "Appearance",
+    tab_cutting: "Cutting Settings",
     tab_feedback: "Feedback",
     tab_about: "About Us",
     
@@ -56,6 +57,10 @@ export const TEXT = {
     
     dynamicTheme: "Dynamic Icon Colors",
     dynamicThemeDesc: "Change interface buttons to match your selected paper color",
+    
+    cuttingSettingsTitle: "Cutting Settings",
+    autoRemoveDisconnected: "Auto-clear detached pieces",
+    autoRemoveDisconnectedDesc: "Automatically remove pieces that are fully cut off and disconnected from the paper body (default: Yes)",
     
     yourSuggestion: "Your Suggestion",
     placeholderFeedback: "Tell us what you think...",
@@ -136,6 +141,7 @@ export const TEXT = {
     tab_tutorial: "使用教程",
     tab_gallery: "我的作品",
     tab_theme: "外观设置",
+    tab_cutting: "剪裁设置",
     tab_feedback: "意见反馈",
     tab_about: "关于我们",
     
@@ -146,6 +152,10 @@ export const TEXT = {
     
     dynamicTheme: "动态图标颜色",
     dynamicThemeDesc: "界面按钮颜色跟随当前纸张颜色变化",
+    
+    cuttingSettingsTitle: "剪裁设定",
+    autoRemoveDisconnected: "自动剪断消除",
+    autoRemoveDisconnectedDesc: "在剪裁或使用花纹时，自动清除与主体断开、悬空的纸张碎屑（默认为 开启）",
     
     yourSuggestion: "您的建议",
     placeholderFeedback: "请告诉我们要改进的地方...",
