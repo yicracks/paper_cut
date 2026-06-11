@@ -21,7 +21,7 @@ export interface StencilPattern {
   nameZh: string;
   nameEn: string;
   svgContent: string;
-  category: 'traditional' | 'zodiac' | 'astrology' | 'wedding';
+  category: 'traditional' | 'zodiac' | 'astrology' | 'wedding' | 'duanwu';
 }
 
 export const STENCILS: StencilPattern[] = [
@@ -163,4 +163,42 @@ export const STENCILS: StencilPattern[] = [
   { id: 'hearts', nameZh: '心心相印', nameEn: 'Double Hearts', svgContent: hearts, category: 'wedding' },
   { id: 'ducks', nameZh: '鸳鸯戏水', nameEn: 'Mandarin Ducks', svgContent: ducks, category: 'wedding' },
   { id: 'coin', nameZh: '招财进宝金币', nameEn: 'Fortune Coin', svgContent: coin, category: 'wedding' },
+
+  // Dragon Boat Festival (端午节)
+  { id: 'duanwu_zongzi', nameZh: '端阳安康粽', nameEn: 'Auspicious Zongzi', category: 'duanwu', svgContent: `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor">
+      <path d="M50,10 L15,75 C10,83 18,88 26,88 L74,88 C82,88 90,83 85,75 Z" />
+      <path d="M50,10 L30,88 M50,10 L70,88 M15,75 C35,68 65,68 85,75" stroke="white" stroke-width="3.5" stroke-linecap="round" fill="none" />
+      <path d="M22,55 C38,48 62,62 78,55" stroke="white" stroke-width="4" stroke-linecap="round" fill="none" />
+      <path d="M22,55 C38,48 62,62 78,55" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" />
+      <circle cx="50" cy="55.5" r="3.5" fill="white" />
+    </svg>`
+  },
+  { id: 'duanwu_dragon', nameZh: '五月端阳龙', nameEn: 'Duanwu Festive Dragon', category: 'duanwu', svgContent: `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor">
+      <path d="M50,5 C32,5 20,20 20,38 C20,55 30,68 50,85 C70,68 80,55 80,38 C80,20 68,5 50,5 Z M35,32 A4,4 0 1,1 35,24 A4,4 0 1,1 35,32 Z M65,32 A4,4 0 1,1 65,24 A4,4 0 1,1 65,32 Z M50,48 C42,48 35,55 35,62 C35,68 42,75 50,75 C58,75 65,68 65,62 C65,55 58,48 50,48 Z" />
+      <path d="M30,5 C25,-5 15,2 18,10 Z M70,5 C75,-5 85,2 82,10 Z" />
+    </svg>`
+  },
+  { id: 'duanwu_dragonboat', nameZh: '竞渡龙神舟', nameEn: 'Racing Dragon Boat', category: 'duanwu', svgContent: `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor">
+      <path d="M0,75 C12,70 24,80 36,75 C48,70 60,80 72,75 C84,70 96,80 100,76 L100,92 L0,92 Z" />
+      <path d="M5,54 C25,64 75,64 92,48 C85,58 15,58 5,54 Z" />
+      <path d="M85,50 C88,48 94,42 94,34 C94,28 88,24 84,28 C82,24 76,26 76,32 C76,38 80,44 84,50 Z" />
+      <path d="M10,55 C6,48 4,40 8,36 C12,32 14,40 14,48 Z" />
+      <path d="M86,22 C88,16 92,16 90,24 Z" />
+      <path d="M28,56 L22,70 M42,56 L36,70 M56,56 L50,70 M70,56 L64,70" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+      <rect x="47" y="44" width="7" height="9" rx="1" />
+      <circle cx="50.5" cy="48.5" r="2" fill="white" />
+    </svg>`
+  },
+  { id: 'duanwu_xiangnang', nameZh: '辟邪五彩香囊', nameEn: 'Amulet Perfume Sachet', category: 'duanwu', svgContent: `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor">
+      <path d="M50,14 L82,46 L50,78 L18,46 Z" />
+      <circle cx="50" cy="46" r="9" fill="white" />
+      <circle cx="50" cy="46" r="4.5" fill="currentColor" />
+      <path d="M50,14 C50,2 50,2 49,4" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none" />
+      <path d="M50,78 L50,96 M45,79 L41,94 M55,79 L59,94" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+    </svg>`
+  }
 ];

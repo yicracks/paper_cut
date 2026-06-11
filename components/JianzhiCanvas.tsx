@@ -675,7 +675,7 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
 
     return (
       <div 
-        className="relative shadow-xl shadow-red-900/20 rounded-sm bg-white border-2 border-zinc-200 overflow-hidden"
+        className="relative shadow-xl shadow-red-900/20 rounded-sm bg-white border-2 border-zinc-200"
         style={{ width: `${currentDisplayWidth}px`, height: `${currentDisplayHeight}px` }}
       >
         {/* Main Canvas */}
@@ -683,7 +683,7 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
             ref={canvasRef}
             width={width}
             height={height}
-            className="block touch-none"
+            className="block touch-none rounded-sm"
             style={{ width: `${currentDisplayWidth}px`, height: `${currentDisplayHeight}px` }}
             draggable={false}
             onContextMenu={(e) => e.preventDefault()}
@@ -695,7 +695,7 @@ const JianzhiCanvas = forwardRef<JianzhiCanvasHandle, JianzhiCanvasProps>(
             ref={previewCanvasRef}
             width={width}
             height={height}
-            className="absolute inset-0 touch-none cursor-crosshair"
+            className="absolute inset-0 touch-none cursor-crosshair rounded-sm"
             style={{ width: `${currentDisplayWidth}px`, height: `${currentDisplayHeight}px` }}
             draggable={false}
             onContextMenu={(e) => e.preventDefault()}

@@ -30,6 +30,7 @@ const StencilPicker: React.FC<StencilPickerProps> = ({
     { id: 'zodiac', zh: '十二生肖', en: 'Zodiac' },
     { id: 'astrology', zh: '十二星座', en: 'Astrology' },
     { id: 'wedding', zh: '节日婚庆', en: 'Festive & Wedding' },
+    { id: 'duanwu', zh: '端午节', en: 'Dragon Boat' },
     { id: 'custom_text', zh: '自制字帖', en: 'DIY Text' },
   ];
 
